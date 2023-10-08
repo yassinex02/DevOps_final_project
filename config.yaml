@@ -1,0 +1,5 @@
+data:
+  raw_filepath: data/raw/bankloan.csv
+  processed_filepath: data/processed/bankloan_processed.csv
+
+
