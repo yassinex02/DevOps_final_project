@@ -1,5 +1,6 @@
 # local package
--e .
+dotenv
+yaml
 
 # external requirements
 click
