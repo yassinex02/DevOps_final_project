@@ -2,20 +2,20 @@ import pandas as pd
 import logging
 import os
 from pathlib import Path
-
-
-# Initialize logging
 import yaml
 
-current_script_directory = Path(__file__).parent
+# Initialize logging
 
-# Get the root directory (parent of the current script's directory in this case)
-root_directory = current_script_directory.parent
 
-# Construct the path to config.yaml
-config_path = root_directory / "config.yaml"
+# current_script_directory = Path(__file__).parent
 
-with open(config_path, 'r') as config_file:
+# # Get the root directory (parent of the current script's directory in this case)
+# root_directory = current_script_directory.parent
+
+# # Construct the path to config.yaml
+# config_path = root_directory / "config.yaml"
+
+with open('config.yaml', 'r') as config_file:
     config = yaml.safe_load(config_file)
 
 

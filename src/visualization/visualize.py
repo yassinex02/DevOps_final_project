@@ -8,20 +8,22 @@ import yaml
 import matplotlib.pyplot as plt
 
 
-# current_script_directory = Path(__file__).parent
-# root_directory = current_script_directory.parent
-# config_path = root_directory / "config.yaml"
-
-# with open(config_path, 'r') as config_file:
-#     config = yaml.safe_load(config_file)
-
-# # Construct the absolute path to the processed CSV file
-# processed_csv_path = root_directory / Path(config['data']['processed_filepath'])
 
 
+import logging
+import os
+import pandas as pd
+import seaborn as sns
+from pathlib import Path
+import pandas as pd
+import yaml
+import matplotlib.pyplot as plt
+
+logging.basicConfig(level=logging.INFO)
 
 def exploratory_data_analysis(df): #TO DO: Deal with the directory location and name later
     """Perform exploratory data analysis and save plots to the specified directory."""
+    logging.info('Starting exploratory data analysis')
     # check_and_create_directory(directory_name)
     
     # Box Plots
@@ -37,3 +39,4 @@ def exploratory_data_analysis(df): #TO DO: Deal with the directory location and 
         sns.displot(data=df, x=x, hue='default')
         # plt.savefig(f"{directory_name}/histhue_{x}.png")
         plt.clf()
+    logging.info('Finished exploratory data analysis')
