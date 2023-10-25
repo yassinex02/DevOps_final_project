@@ -16,8 +16,6 @@ def preprocess_data(df):
         logging.error(f"An error occurred while preprocessing the data: {e}")
         raise
 
-
-
 # Ensure that only the columns above are present in the dataframe
 
 def check_columns():
@@ -33,5 +31,9 @@ def check_columns():
     except Exception as e:
         logging.error(f"An error occurred while checking the columns: {e}")
         raise
+
+
+
+
 
 

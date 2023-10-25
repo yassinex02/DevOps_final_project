@@ -52,8 +52,6 @@ def random_undersampling(X_train: pd.DataFrame, y_train: pd.Series, random_state
         logging.error(f"An error occurred while random undersampling the data: {e}")
         raise
 
-
-
 def train_logistic_regression(X_train: pd.DataFrame, y_train: pd.Series, random_state: int, class_weight=None) -> LogisticRegression:
     """Train a logistic regression model."""
     try:
