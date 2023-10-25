@@ -40,3 +40,4 @@ def exploratory_data_analysis(df): #TO DO: Deal with the directory location and 
         # plt.savefig(f"{directory_name}/histhue_{x}.png")
         plt.clf()
     logging.info('Finished exploratory data analysis')
+    
