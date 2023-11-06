@@ -19,7 +19,11 @@ import pandas as pd
 import yaml
 import matplotlib.pyplot as plt
 
-logging.basicConfig(level=logging.INFO)
+with open('config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+
+# Set up logging
+logging.basicConfig(format=config['logging']['format'], level=config['logging']['level'].upper())
 
 def exploratory_data_analysis(df): #TO DO: Deal with the directory location and name later
     """Perform exploratory data analysis and save plots to the specified directory."""
