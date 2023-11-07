@@ -16,3 +16,24 @@ def preprocess_data(df):
         logging.error(f"An error occurred while preprocessing the data: {e}")
         raise
 
+# Ensure that only the columns above are present in the dataframe
+
+def check_columns():
+    """Check if the columns in the dataframe are the expected columns."""
+    try:
+        logging.info("Checking columns.")
+        expected_columns = ['age', 'ed', 'employ', 'address', 'income', 'debtinc', 'creddebt', 'othdebt', 'default']
+        if set(expected_columns) == set(df.columns):
+            logging.info("Columns are correct.")
+        else:
+            logging.error("Columns are not correct.")
+            raise
+    except Exception as e:
+        logging.error(f"An error occurred while checking the columns: {e}")
+        raise
+
+
+
+
+
+

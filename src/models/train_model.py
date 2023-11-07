@@ -18,6 +18,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import resample
 from sklearn.model_selection import cross_val_score
 from sklearn import metrics
+from imblearn.under_sampling import RandomUnderSampler
+
 
 
 #initialize logging
@@ -39,6 +41,17 @@ def split_data(df:pd.DataFrame, test_size: float, random_state: int) -> Tuple[pd
     # return train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
 
 
+def random_undersampling(X_train: pd.DataFrame, y_train: pd.Series, random_state: int) -> Tuple[pd.DataFrame]:
+    """Split data into training and testing sets."""
+    try:
+        logging.info("Random undersampling.")
+        rus = RandomUnderSampler(random_state=random_state)
+        X_train_rus, y_train_rus = rus.fit_resample(X_train, y_train)
+        return X_train_rus, y_train_rus
+    except Exception as e:
+        logging.error(f"An error occurred while random undersampling the data: {e}")
+        raise
+
 def train_logistic_regression(X_train: pd.DataFrame, y_train: pd.Series, random_state: int, class_weight=None) -> LogisticRegression:
     """Train a logistic regression model."""
     try:
@@ -49,40 +62,6 @@ def train_logistic_regression(X_train: pd.DataFrame, y_train: pd.Series, random_
     except Exception as e:
         logging.error(f"An error occurred while training the logistic regression model: {e}")
         raise
-
-def train_random_forest(X_train: pd.DataFrame, y_train: pd.Series, random_state: int, class_weight=None) -> RandomForestClassifier:
-    """Train a random forest model."""
-    try:
-        logging.info("Training a random forest model.")
-        rf_model = RandomForestClassifier(random_state=random_state, class_weight=class_weight)
-        rf_model.fit(X_train, y_train)
-        return rf_model
-    except Exception as e:
-        logging.error(f"An error occurred while training the random forest model: {e}")
-        raise
-
-def train_stochastic_gradient_descent(X_train: pd.DataFrame, y_train: pd.Series, random_state: int, class_weight=None) -> SGDClassifier:
-    """Train a stochastic gradient descent model."""
-    try:
-        logging.info("Training a stochastic gradient descent model.")
-        sgd_model = SGDClassifier(random_state=random_state, class_weight=class_weight)
-        sgd_model.fit(X_train, y_train)
-        return sgd_model
-    except Exception as e:
-        logging.error(f"An error occurred while training the stochastic gradient descent model: {e}")
-        raise
-
-def train_support_vector_machine(X_train: pd.DataFrame, y_train: pd.Series, random_state: int, class_weight=None) -> SVC:
-    """Train a support vector machine model."""
-    try:
-        logging.info("Training a support vector machine model.")
-        svm_model = SVC(random_state=random_state, class_weight=class_weight)
-        svm_model.fit(X_train, y_train)
-        return svm_model
-    except Exception as e:
-        logging.error(f"An error occurred while training the support vector machine model: {e}")
-        raise
-
 
 def evaluate_model(model:LogisticRegression, X_test: pd.DataFrame, y_test: pd.Series) -> pd.DataFrame:
     """
@@ -142,12 +121,12 @@ def perform_model_building(df: pd.DataFrame, model_type: str, target_column: str
         # Train the specified model
         if model_type == "logistic_regression":
             model = train_logistic_regression(X_train, y_train, random_state, class_weight=class_weight)
-        elif model_type == "random_forest":
-            model = train_random_forest(X_train, y_train, random_state, class_weight=class_weight)
-        elif model_type == "stochastic_gradient_descent":
-            model = train_stochastic_gradient_descent(X_train, y_train, random_state, class_weight=class_weight)
-        elif model_type == "support_vector_machine":
-            model = train_support_vector_machine(X_train, y_train, random_state, class_weight=class_weight)
+        # elif model_type == "random_forest":
+        #     model = train_random_forest(X_train, y_train, random_state, class_weight=class_weight)
+        # elif model_type == "stochastic_gradient_descent":
+        #     model = train_stochastic_gradient_descent(X_train, y_train, random_state, class_weight=class_weight)
+        # elif model_type == "support_vector_machine":
+        #     model = train_support_vector_machine(X_train, y_train, random_state, class_weight=class_weight)
         else:
             raise ValueError(f"Unsupported model type: {model_type}")
         
