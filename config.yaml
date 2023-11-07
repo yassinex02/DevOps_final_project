@@ -1,5 +1,15 @@
-data:
-  raw_filepath: data/raw/bankloan.csv
-  processed_filepath: data/processed/bankloan_processed.csv
+model_building:
+  split_data:
+    test_size: 0.2
+    random_state: 42
+
+  train_logistic_regression:
+    class_weight: balanced
 
 
+
+
+
+logging:
+  level: INFO  
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"  

@@ -21,9 +21,11 @@ from sklearn import metrics
 from imblearn.under_sampling import RandomUnderSampler
 
 
+with open('config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
 
-#initialize logging
-logging.basicConfig(level=logging.INFO)
+# Set up logging
+logging.basicConfig(format=config['logging']['format'], level=config['logging']['level'].upper())
 
 def split_data(df:pd.DataFrame, test_size: float, random_state: int) -> Tuple[pd.DataFrame]:
     """Split data into training and testing sets."""

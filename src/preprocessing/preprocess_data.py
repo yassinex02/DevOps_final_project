@@ -1,5 +1,13 @@
 import pandas as pd
 import logging 
+import yaml
+
+
+with open('config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+
+
+logging.basicConfig(format=config['logging']['format'], level=config['logging']['level'].upper())
 
 # initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +26,7 @@ def preprocess_data(df):
 
 # Ensure that only the columns above are present in the dataframe
 
-def check_columns():
+def check_columns(df):
     """Check if the columns in the dataframe are the expected columns."""
     try:
         logging.info("Checking columns.")
