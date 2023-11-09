@@ -1,5 +1,20 @@
-data:
-  raw_filepath: data/raw/bankloan.csv
-  processed_filepath: data/processed/bankloan_processed.csv
+file_paths:
+  output_file: output_profile_report.html
 
+logging:
+  format: "%(asctime)s [%(levelname)s] %(message)s"
+  level: INFO
 
+profile_report:
+  title: Profiling Report
+
+expected_columns:
+  - age
+  - ed
+  - employ
+  - address
+  - income
+  - debtinc
+  - creddebt
+  - othdebt
+  - default

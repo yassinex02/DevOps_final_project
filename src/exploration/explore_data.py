@@ -1,60 +1,80 @@
-import os
-import seaborn as sns
-import matplotlib.pyplot as plt
+
+from typing import Optional
+import pandas as pd
+from ydata_profiling import ProfileReport
 import logging
+import os
+import yaml
 
-# Create a logger
-logger = logging.getLogger("my_logger")
-logger.setLevel(logging.DEBUG)
-
-# Configure a file handler to log errors only
-file_handler = logging.FileHandler('eda_log.log')
-file_handler.setLevel(logging.ERROR)  # Log only errors
-formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-
-# Configure a console handler to display both info and errors
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)  # Display info and above
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
+# Function to read YAML configuration
 
 
-def check_and_create_directory(directory_name):
-    """Check if a directory exists, if not, create it."""
+def read_yaml_config(file_path: str) -> dict:
     try:
-        if not os.path.exists(directory_name):
-            os.mkdir(directory_name)
-            logger.info(f"Created directory: {directory_name}")
+        with open(file_path, 'r') as f:
+            config = yaml.safe_load(f)
+        return config
     except Exception as e:
-        logger.error(f"Error creating directory {directory_name}: {str(e)}")
+        raise RuntimeError(f"Failed to read the YAML configuration file: {e}")
 
 
-def exploratory_data_analysis(df, directory_name="images"):
-    """Perform exploratory data analysis and save plots to the specified directory."""
-    check_and_create_directory(directory_name)
+# Read the YAML configuration file
+config_file_path = "config.yaml"
+config = read_yaml_config(config_file_path)
 
-    # Box Plots
-    variables = ["age", "ed", "employ", "address",
-                 "debtinc", "creddebt", "othdebt"]
-    for y in variables:
-        if y != "ed":
-            try:
-                sns.boxplot(data=df, x="default", y=y)
-                plt.savefig(f"{directory_name}/boxplot_{y}.png")
-                plt.clf()
-                logger.info(f"Saved boxplot for {y}")
-            except Exception as e:
-                logger.error(f"Error creating boxplot for {y}: {str(e)}")
+# Initialize logging
+logging.basicConfig(
+    format=config['logging']['format'], level=config['logging']['level'].upper())
 
-    # Histograms
-    for x in variables:
-        try:
-            sns.displot(data=df, x=x, hue='default')
-            plt.savefig(f"{directory_name}/histhue_{x}.png")
-            plt.clf()
-            logger.info(f"Saved histogram for {x}")
-        except Exception as e:
-            logger.error(f"Error creating histogram for {x}: {str(e)}")
+
+EXPECTED_COLUMNS = config.get('expected_columns', [])
+
+
+def generate_profiling_report(df: pd.DataFrame, output_file: str, columns: Optional[list] = None):
+    """
+    Generate a profiling report from a DataFrame using ydata-profiling's ProfileReport.
+
+    Parameters:
+        df (pd.DataFrame): The DataFrame to profile.
+        output_file (str): The path to the file where the report will be saved.
+        columns (list, optional): List of column names to include in the profiling report. If None, all columns are included.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If the DataFrame is empty or if specified columns are not present.
+    """
+    # Get title from config
+    report_title = config.get('profile_report', {}).get(
+        'title', 'Profiling Report')
+    logging.info("Generating profiling report...")
+
+    # Validate input DataFrame
+    if df.empty:
+        logging.error(
+            "Input DataFrame is empty. Cannot generate profiling report.")
+        raise ValueError(
+            "Input DataFrame is empty. Cannot generate profiling report.")
+
+    # Check if expected columns exist in the DataFrame
+    missing_expected_columns = [
+        col for col in EXPECTED_COLUMNS if col not in df.columns]
+    if missing_expected_columns:
+        logging.error(
+            f"Expected columns not found in the DataFrame: {missing_expected_columns}")
+        raise ValueError(
+            f"Expected columns not found in the DataFrame: {missing_expected_columns}")
+
+    # Select specified columns if provided
+    selected_df = df[columns] if columns else df
+
+    # Generate profiling report
+    try:
+        profile = ProfileReport(selected_df, title=report_title)
+        profile.to_file(output_file)
+        logging.info(f"Profiling report generated and saved to {output_file}.")
+    except Exception as e:
+        logging.error(
+            f"An error occurred while generating the profiling report: {e}")
+        raise
