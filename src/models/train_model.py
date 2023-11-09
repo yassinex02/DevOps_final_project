@@ -164,6 +164,9 @@ def perform_model_building(df: pd.DataFrame, model_type: str, target_column: str
         X_train, X_test, y_train, y_test = split_data(
             df, target_column, test_size, random_state)
 
+        # Perform random undersampling
+        X_train_rus, y_train_rus = random_undersampling(X_train, y_train, random_state)
+
         # # Perform baselining
         # baseline_metrics = perform_baselining(y_test)
         # logging.info(f"Baseline Metrics: {baseline_metrics}")
@@ -171,18 +174,16 @@ def perform_model_building(df: pd.DataFrame, model_type: str, target_column: str
         # Train the specified model
         if model_type == "logistic_regression":
             model = train_logistic_regression(
-                X_train, y_train, random_state, class_weight=class_weight)
+                X_train_rus, y_train_rus, random_state, class_weight=class_weight)
         elif model_type == "random_forest":
             model = train_random_forest(
-                X_train, y_train, random_state, class_weight=class_weight)
+                X_train_rus, y_train_rus, random_state, class_weight=class_weight)
         elif model_type == "stochastic_gradient_descent":
             model = train_stochastic_gradient_descent(
-                X_train, y_train, random_state, class_weight=class_weight)
+                X_train_rus, y_train_rus, random_state, class_weight=class_weight)
         elif model_type == "support_vector_machine":
             model = train_support_vector_machine(
-                X_train, y_train, random_state, class_weight=class_weight)
-        else:
-            raise ValueError(f"Unsupported model type: {model_type}")
+                X_train_rus, y_train_rus, random_state, class_weight=class_weight)
 
         # Evaluate the model
         evaluation_metrics = evaluate_model(model, X_test, y_test)
@@ -203,7 +204,7 @@ def main(args):
     """
     try:
         # Load your data here. For example:
-        # df = pd.read_csv(args.data_path)
+        df = pd.read_csv(args.data_path)
         
         # Perform model building
         evaluation_metrics = perform_model_building(
@@ -238,3 +239,6 @@ if __name__ == '__main__':
 
     # Call the main function with the parsed arguments
     main(args)
+
+if __name__ == "__main__":
+    main()
