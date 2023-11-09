@@ -1,10 +1,9 @@
-
+import argparse
+import logging
 from typing import Optional
 import pandas as pd
-from ydata_profiling import ProfileReport
-import logging
 import yaml
-import argparse
+from ydata_profiling import ProfileReport
 
 # Function to read YAML configuration
 
