@@ -3,8 +3,8 @@ from typing import Optional
 import pandas as pd
 from ydata_profiling import ProfileReport
 import logging
-import os
 import yaml
+import argparse
 
 # Function to read YAML configuration
 
@@ -25,7 +25,6 @@ config = read_yaml_config(config_file_path)
 # Initialize logging
 logging.basicConfig(
     format=config['logging']['format'], level=config['logging']['level'].upper())
-
 
 EXPECTED_COLUMNS = config.get('expected_columns', [])
 
@@ -78,3 +77,29 @@ def generate_profiling_report(df: pd.DataFrame, output_file: str, columns: Optio
         logging.error(
             f"An error occurred while generating the profiling report: {e}")
         raise
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Generate a profiling report from a DataFrame.')
+    parser.add_argument('input_filepath', type=str,
+                        help='Path to the input CSV file')
+    parser.add_argument('output_filepath', type=str,
+                        help='Path to save the profiling report')
+    parser.add_argument('--columns', type=str, default=None,
+                        help='List of column names to include in the profiling report. If not provided, all columns are included.')
+
+    args = parser.parse_args()
+
+    # Read the DataFrame from the input file or any other source
+    df = pd.read_csv(args.input_filepath)
+
+    # Split the columns string into a list
+    columns_list = args.columns.split(',') if args.columns else None
+
+    # Call the generate_profiling_report function with the DataFrame and other arguments
+    generate_profiling_report(df, args.output_filepath, columns_list)
+
+
+if __name__ == "__main__":
+    main()

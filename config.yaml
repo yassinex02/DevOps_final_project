@@ -18,3 +18,12 @@ expected_columns:
   - creddebt
   - othdebt
   - default
+
+factorize_columns:
+  - ed
+
+standardize_columns:
+  - income
+  - debtinc
+  - creddebt
+  - othdebt

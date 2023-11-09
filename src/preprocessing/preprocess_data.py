@@ -3,7 +3,7 @@ import logging
 import yaml
 from typing import List
 from sklearn.preprocessing import StandardScaler
-
+import argparse
 
 # Load configurations from config.yaml
 with open('config.yaml', 'r') as f:
@@ -88,3 +88,41 @@ def standardize_columns(df: pd.DataFrame, columns_to_standardize: List[str]) -> 
     except Exception as e:
         logging.error(f"An error occurred while standardizing columns: {e}")
         raise
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Clean and preprocess data.')
+    parser.add_argument('input_file', type=str,
+                        help='Path to the input CSV file')
+    parser.add_argument('output_file', type=str,
+                        help='Path to save the cleaned data CSV file')
+    parser.add_argument('--drop_columns', nargs='+',
+                        help='List of columns to drop')
+
+    args = parser.parse_args()
+
+    # Read data from CSV
+    df = pd.read_csv(args.input_file)
+
+    # Clean data
+    if args.drop_columns:
+        df = clean_data(df, drop_columns=args.drop_columns)
+
+    # Factorize columns from config.yaml
+    factorize_columns = config.get('factorize_columns', [])
+    for column in factorize_columns:
+        df = factorize_column(df, column_name=column)
+
+    # Standardize columns from config.yaml
+    standardize_columns_list = config.get('standardize_columns', [])
+    if standardize_columns_list:
+        df = standardize_columns(
+            df, columns_to_standardize=standardize_columns_list)
+
+    # Save cleaned data
+    df.to_csv(args.output_file, index=False)
+    logging.info(f"Cleaned data saved to {args.output_file}")
+
+
+if __name__ == '__main__':
+    main()
