@@ -1,14 +1,13 @@
-import pandas as pd
+import argparse
 import logging
 import os
-import argparse
-
-# Initialize logging
+import pandas as pd
 import yaml
 
-with open("config.yaml", 'r') as config_file:
+with open("config.yaml", 'r', encoding='utf-8') as config_file:
     config = yaml.safe_load(config_file)
 
+# Initialize logging
 logging.basicConfig(level=logging.getLevelName(config['logging']['level']),
                     format=config['logging']['format'])
 
