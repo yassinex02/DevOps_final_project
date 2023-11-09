@@ -7,7 +7,7 @@ from src.exploration.explore_data import check_and_create_directory, exploratory
 from src.features import build_features  # empty
 from src.preprocessing.preprocess_data import preprocess_data
 from src.visualization.visualize import plot_roc_curve
-from src.data_load import load_data
+from src.load_data.data_load import load_data
 
 
 # from imblearn.under_sampling import RandomUnderSampler

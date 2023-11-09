@@ -7,6 +7,7 @@ import yaml
 from pathlib import Path
 import logging
 from typing import Tuple
+from imblearn.under_sampling import RandomUnderSampler
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -37,6 +38,21 @@ def split_data(df: pd.DataFrame, target_column: str, test_size: float, random_st
         return X_train, X_test, y_train, y_test
     except Exception as e:
         logging.error(f"An error occurred while splitting the data: {e}")
+        raise
+
+
+def random_undersampling(X_train: pd.DataFrame, y_train: pd.Series, random_state: int) -> Tuple[pd.DataFrame]:
+    """
+    Perform random undersampling on the training data.
+    """
+    try:
+        logging.info("Random undersampling.")
+        rus = RandomUnderSampler(random_state=random_state)
+        X_train_rus, y_train_rus = rus.fit_resample(X_train, y_train)
+        return X_train_rus, y_train_rus
+    except Exception as e:
+        logging.error(
+            f"An error occurred while random undersampling the data: {e}")
         raise
 
 
