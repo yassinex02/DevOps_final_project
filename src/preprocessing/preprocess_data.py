@@ -1,17 +1,18 @@
-import pandas as pd
-import logging
-import yaml
-from typing import List
-from sklearn.preprocessing import StandardScaler
 import argparse
+import logging
+from typing import List
+import pandas as pd
+import yaml
+from sklearn.preprocessing import StandardScaler
 
 # Load configurations from config.yaml
-with open('config.yaml', 'r') as f:
+with open("config.yaml", "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
 
 # Set up logging
 logging.basicConfig(
-    format=config['logging']['format'], level=config['logging']['level'].upper())
+    format=config["logging"]["format"], level=config["logging"]["level"].upper()
+)
 
 
 def clean_data(df: pd.DataFrame, drop_columns: List[str] = None) -> pd.DataFrame:
@@ -31,10 +32,8 @@ def clean_data(df: pd.DataFrame, drop_columns: List[str] = None) -> pd.DataFrame
     logging.info("Starting data cleaning...")
 
     if df.empty:
-        logging.error(
-            "Input DataFrame is empty. Cannot perform data cleaning.")
-        raise ValueError(
-            "Input DataFrame is empty. Cannot perform data cleaning.")
+        logging.error("Input DataFrame is empty. Cannot perform data cleaning.")
+        raise ValueError("Input DataFrame is empty. Cannot perform data cleaning.")
 
     try:
         # Initialize df_cleaned
@@ -70,11 +69,14 @@ def factorize_column(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
         return df_factorized
     except Exception as e:
         logging.error(
-            f"An error occurred while factorizing the {column_name} column: {e}")
+            f"An error occurred while factorizing the {column_name} column: {e}"
+        )
         raise
 
 
-def standardize_columns(df: pd.DataFrame, columns_to_standardize: List[str]) -> pd.DataFrame:
+def standardize_columns(
+    df: pd.DataFrame, columns_to_standardize: List[str]
+) -> pd.DataFrame:
     """
     Standardize specified columns using z-score normalization.
     """
@@ -83,7 +85,8 @@ def standardize_columns(df: pd.DataFrame, columns_to_standardize: List[str]) -> 
         df_standardized = df.copy()
         scaler = StandardScaler()
         df_standardized[columns_to_standardize] = scaler.fit_transform(
-            df[columns_to_standardize])
+            df[columns_to_standardize]
+        )
         return df_standardized
     except Exception as e:
         logging.error(f"An error occurred while standardizing columns: {e}")
@@ -91,13 +94,12 @@ def standardize_columns(df: pd.DataFrame, columns_to_standardize: List[str]) -> 
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Clean and preprocess data.')
-    parser.add_argument('input_file', type=str,
-                        help='Path to the input CSV file')
-    parser.add_argument('output_file', type=str,
-                        help='Path to save the cleaned data CSV file')
-    parser.add_argument('--drop_columns', nargs='+',
-                        help='List of columns to drop')
+    parser = argparse.ArgumentParser(description="Clean and preprocess data.")
+    parser.add_argument("input_file", type=str, help="Path to the input CSV file")
+    parser.add_argument(
+        "output_file", type=str, help="Path to save the cleaned data CSV file"
+    )
+    parser.add_argument("--drop_columns", nargs="+", help="List of columns to drop")
 
     args = parser.parse_args()
 
@@ -109,20 +111,19 @@ def main():
         df = clean_data(df, drop_columns=args.drop_columns)
 
     # Factorize columns from config.yaml
-    factorize_columns = config.get('factorize_columns', [])
+    factorize_columns = config.get("factorize_columns", [])
     for column in factorize_columns:
         df = factorize_column(df, column_name=column)
 
     # Standardize columns from config.yaml
-    standardize_columns_list = config.get('standardize_columns', [])
+    standardize_columns_list = config.get("standardize_columns", [])
     if standardize_columns_list:
-        df = standardize_columns(
-            df, columns_to_standardize=standardize_columns_list)
+        df = standardize_columns(df, columns_to_standardize=standardize_columns_list)
 
     # Save cleaned data
     df.to_csv(args.output_file, index=False)
     logging.info(f"Cleaned data saved to {args.output_file}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
