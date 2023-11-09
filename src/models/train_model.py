@@ -9,6 +9,7 @@ import logging
 from typing import Tuple
 from imblearn.under_sampling import RandomUnderSampler
 import argparse
+from joblib import dump
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -145,6 +146,46 @@ def evaluate_model(model: LogisticRegression, X_test: pd.DataFrame, y_test: pd.S
         logging.error(f"An error occurred while evaluating the model: {e}")
         raise
 
+def plot_roc_curve(model, X_test, y_test, report_folder, model_type):
+    """
+    Plot the ROC curve for the given model and test data.
+    
+    Parameters:
+    model (Model): The trained model.
+    X_test (DataFrame): The test features.
+    y_test (Series): The true labels for the test data.
+    report_folder (str): The folder where to save the plot.
+    model_type (str): The type of the model, used for naming the plot file.
+    """
+    y_pred_proba = model.predict_proba(X_test)[:, 1]
+    fpr, tpr, _ = metrics.roc_curve(y_test, y_pred_proba)
+    auc = metrics.roc_auc_score(y_test, y_pred_proba)
+    plt.figure()
+    plt.plot(fpr, tpr, label=f"AUC={auc:.2f}")
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(f'ROC Curve for {model_type}')
+    plt.legend(loc=4)
+    
+    # Save the plot to a file
+    plt.savefig(f"{report_folder}{model_type}_roc_curve.png")
+    plt.close()
+
+def save_model(model, filename: str):
+    """
+    Save the trained model to disk.
+
+    Parameters:
+    model (sklearn.base.BaseEstimator): The trained machine learning model.
+    filename (str): The path to the file where the model should be saved.
+    """
+    try:
+        dump(model, filename)
+        logging.info(f"Model saved to {filename}")
+    except Exception as e:
+        logging.error(f"An error occurred while saving the model: {e}")
+        raise
+
 
 def perform_model_building(df: pd.DataFrame, model_type: str, target_column: str, test_size: float, random_state: int, class_weight=None) -> pd.DataFrame:
     """
@@ -184,9 +225,16 @@ def perform_model_building(df: pd.DataFrame, model_type: str, target_column: str
         elif model_type == "support_vector_machine":
             model = train_support_vector_machine(
                 X_train_rus, y_train_rus, random_state, class_weight=class_weight)
+            
+        # Save the trained model
+        model_filename = f"{reports_folder}{model_type}_model.joblib"
+        save_model(model, model_filename)
 
         # Evaluate the model
         evaluation_metrics = evaluate_model(model, X_test, y_test)
+
+        # Plot and save the ROC curve
+        plot_roc_curve(model, X_test, y_test, reports_folder, model_type)
 
         # Save the evaluation metrics and baselines to separate CSV files
         evaluation_metrics.to_csv(metrics_report_path, index=False)
