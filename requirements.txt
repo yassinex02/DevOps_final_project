@@ -1,7 +1,8 @@
 # local package
 dotenv
 yaml
-
+seaborn 
+sklearn
 # external requirements
 click
 Sphinx

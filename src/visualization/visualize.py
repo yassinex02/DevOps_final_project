@@ -1,12 +1,5 @@
-import logging
-import os
-import pandas as pd
-import seaborn as sns
-from pathlib import Path
-import pandas as pd
-import yaml
 import matplotlib.pyplot as plt
-
+from sklearn import metrics
 
 # current_script_directory = Path(__file__).parent
 # root_directory = current_script_directory.parent
@@ -19,21 +12,12 @@ import matplotlib.pyplot as plt
 # processed_csv_path = root_directory / Path(config['data']['processed_filepath'])
 
 
-
-def exploratory_data_analysis(df): #TO DO: Deal with the directory location and name later
-    """Perform exploratory data analysis and save plots to the specified directory."""
-    # check_and_create_directory(directory_name)
-    
-    # Box Plots
-    variables = ["age", "ed", "employ", "address", "debtinc", "creddebt", "othdebt"]
-    for y in variables:
-        if y != "ed":
-            sns.boxplot(data=df, x="default", y=y)
-            # plt.savefig(f"{directory_name}/boxplot_{y}.png")
-            plt.clf()
-            
-    # Histograms
-    for x in variables:
-        sns.displot(data=df, x=x, hue='default')
-        # plt.savefig(f"{directory_name}/histhue_{x}.png")
-        plt.clf()
+def plot_roc_curve(model, X_test, y_test):
+    y_pred_proba = model.predict_proba(X_test)[::, 1]
+    fpr, tpr, _ = metrics.roc_curve(y_test, y_pred_proba)
+    auc = metrics.roc_auc_score(y_test, y_pred_proba)
+    plt.plot(fpr, tpr, label="AUC="+str(auc))
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc=4)
+    plt.show()

@@ -1,8 +1,9 @@
 import pandas as pd
-import logging 
+import logging
 
 # initialize logging
 logging.basicConfig(level=logging.INFO)
+
 
 def preprocess_data(df):
     """Preprocess the dataframe: convert columns to appropriate types, handle missing values etc."""
@@ -15,4 +16,3 @@ def preprocess_data(df):
     except Exception as e:
         logging.error(f"An error occurred while preprocessing the data: {e}")
         raise
-
