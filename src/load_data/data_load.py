@@ -60,25 +60,22 @@ def load_data(file_path: str, sheet_name: str = None) -> pd.DataFrame:
 
 def main(args):
     """
-    The main entry point of the application.
-
-    Parameters:
-    args (argparse.Namespace): Command line arguments parsed by argparse.
+    Main function that loads data from a file specified by command line arguments.
     """
     try:
-        # Use the args here
-        data_frame = load_data(args.file_path, args.sheet_name)
-        # The rest of your code to work with the data_frame
-        # ...
+        # Load the data using the arguments from argparse
+        df= load_data(args.file_path, args.sheet_name)
+        # Further processing or analysis can be done here with the loaded data_frame
+        print(f"Data loaded successfully with shape: {df.shape}")
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         raise
 
 if __name__ == '__main__':
-    # Create the parser
-    parser = argparse.ArgumentParser(description="Load data into a DataFrame.")
+    # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Load data into a DataFrame from various file formats.")
 
-    # Add the arguments
+    # Add arguments to the parser
     parser.add_argument('file_path', type=str, help='The path to the data file.')
     parser.add_argument('--sheet_name', type=str, default=None, help='The name of the sheet to read if the file is an Excel file.')
 
