@@ -8,6 +8,7 @@ from pathlib import Path
 import logging
 from typing import Tuple
 from imblearn.under_sampling import RandomUnderSampler
+import argparse
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -194,3 +195,46 @@ def perform_model_building(df: pd.DataFrame, model_type: str, target_column: str
     except Exception as e:
         logging.error(f"An error occurred during model building: {e}")
         raise
+
+def main(args):
+    """
+    The main entry point of the application that performs data splitting, 
+    model training, and evaluation based on the provided command line arguments.
+    """
+    try:
+        # Load your data here. For example:
+        # df = pd.read_csv(args.data_path)
+        
+        # Perform model building
+        evaluation_metrics = perform_model_building(
+            df=df, 
+            model_type=args.model_type,
+            target_column=args.target_column,
+            test_size=args.test_size,
+            random_state=args.random_state,
+            class_weight=args.class_weight
+        )
+
+        # Output the evaluation metrics
+        print(evaluation_metrics)
+
+    except Exception as e:
+        logging.error(f"An error occurred in the main function: {e}")
+        raise
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Machine Learning Model Building and Evaluation")
+    
+    # Replace these example arguments with the ones you need
+    parser.add_argument('data_path', type=str, help='Path to the dataset.')
+    parser.add_argument('model_type', type=str, choices=['logistic_regression', 'random_forest', 'stochastic_gradient_descent', 'support_vector_machine'], help='Type of model to train.')
+    parser.add_argument('target_column', type=str, help='Name of the target column.')
+    parser.add_argument('--test_size', type=float, default=0.2, help='Size of the test set.')
+    parser.add_argument('--random_state', type=int, default=42, help='The random state for reproducibility.')
+    parser.add_argument('--class_weight', default=None, help='Class weights for imbalanced datasets.')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Call the main function with the parsed arguments
+    main(args)

@@ -1,6 +1,7 @@
 import pandas as pd
 import logging
 import os
+import argparse
 
 # Initialize logging
 import yaml
@@ -56,3 +57,33 @@ def load_data(file_path: str, sheet_name: str = None) -> pd.DataFrame:
     except Exception as e:
         logging.error(f"An error occurred while loading the data: {e}")
         raise
+
+def main(args):
+    """
+    The main entry point of the application.
+
+    Parameters:
+    args (argparse.Namespace): Command line arguments parsed by argparse.
+    """
+    try:
+        # Use the args here
+        data_frame = load_data(args.file_path, args.sheet_name)
+        # The rest of your code to work with the data_frame
+        # ...
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        raise
+
+if __name__ == '__main__':
+    # Create the parser
+    parser = argparse.ArgumentParser(description="Load data into a DataFrame.")
+
+    # Add the arguments
+    parser.add_argument('file_path', type=str, help='The path to the data file.')
+    parser.add_argument('--sheet_name', type=str, default=None, help='The name of the sheet to read if the file is an Excel file.')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Call the main function with the parsed arguments
+    main(args)
