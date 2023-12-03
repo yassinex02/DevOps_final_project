@@ -2,16 +2,10 @@ import argparse
 import logging
 import os
 import pandas as pd
-import yaml
 import wandb
 
-with open("config.yaml", 'r', encoding='utf-8') as config_file:
-    config = yaml.safe_load(config_file)
-
 # Initialize logging
-logging.basicConfig(level=logging.getLevelName(config['logging']['level']),
-                    format=config['logging']['format'])
-
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 logger = logging.getLogger(__name__)
 
 
