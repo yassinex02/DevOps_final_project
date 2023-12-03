@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from imblearn.under_sampling import RandomUnderSampler
+import wandb
 from joblib import dump
 from sklearn.dummy import DummyClassifier
 from sklearn import metrics
@@ -246,9 +247,17 @@ def main(args):
     The main entry point of the application that performs data splitting,
     model training, and evaluation based on the provided command line arguments.
     """
+
+    # Path to the input artifact
+    input_artifact = wandb.use_artifact(args.input_artifact)
+    input_artifact_path = input_artifact.file()
+
+
     try:
-        # Load your data here. For example:
-        df = pd.read_csv(args.data_path)
+        wandb.init(job_type="model_training")
+
+        # Load input artifact (cleaned data)
+        df = pd.read_csv(input_artifact_path)
 
         # Perform model building
         evaluation_metrics = perform_model_building(
@@ -262,38 +271,84 @@ def main(args):
         # Output the evaluation metrics
         print(evaluation_metrics)
 
+        # Save and log the model as an artifact
+        model_path = "reports/Logistic_Regression_model.joblib"
+        model_artifact = wandb.Artifact(
+            args.output_artifact_name, 
+            type="model",
+            description="Trained model artifact"
+        )
+        model_artifact.add_file(model_path)
+        wandb.log_artifact(model_artifact)
+
+        # Save and log evaluation metrics and baselines as artifacts
+        metrics_report_path = "reports/_metrics_report.csv"
+        baseline_report_path = "reports/_baseline_report.csv"
+        roc_curve_path = "reports/Logistic_Regression_model_roc_curve.png"
+
+        metrics_artifact = wandb.Artifact(
+            "evaluation_metrics", 
+            type="metrics",
+            description="Evaluation metrics of the model"
+        )
+        metrics_artifact.add_file(metrics_report_path)
+        metrics_artifact.add_file(baseline_report_path)
+        metrics_artifact.add_file(roc_curve_path)
+        wandb.log_artifact(metrics_artifact)
+
     except Exception as e:
         logging.error(f"An error occurred in the main function: {e}")
         raise
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Machine Learning Model Building and Evaluation"
-    )
-
-    # Replace these example arguments with the ones you need
-    parser.add_argument("data_path", type=str, help="Path to the dataset.")
-    parser.add_argument("target_column", type=str,
-                        help="Name of the target column.")
+    parser = argparse.ArgumentParser(description="Machine Learning Model Building and Evaluation")
+    
     parser.add_argument(
-        "--test_size", type=float, default=0.2, help="Size of the test set."
+        "--input_artifact",
+        type=str,
+        required=True,
+        help="Name for the input artifact"
+    )
+    parser.add_argument(
+        "--target_column",
+        type=str,
+        required=True,
+        help="Name of the target column"
+    )
+    parser.add_argument(
+        "--test_size",
+        type=float,
+        default=0.2,
+        help="Size of the test set."
     )
     parser.add_argument(
         "--random_state",
         type=int,
         default=42,
-        help="The random state for reproducibility.",
+        help="The random state for reproducibility."
     )
     parser.add_argument(
-        "--class_weight", default=None, help="Class weights for imbalanced datasets."
+        "--class_weight",
+        default=None,
+        help="Class weights for imbalanced datasets."
     )
-
-    # Parse the arguments
+    parser.add_argument(
+        "--output_artifact_name",
+        type=str,
+        required=True,
+        help="Name for the output artifact"
+    )
+    parser.add_argument(
+        "--output_artifact_type",
+        type=str,
+        required=True,
+        help="Type of the output artifact"
+    )
+    parser.add_argument(
+        "--output_artifact_description",
+        type=str,
+        help="Description for the output artifact"
+    )
+    
     args = parser.parse_args()
-
-    # Call the main function with the parsed arguments
-    main(args)
-
-if __name__ == "__main__":
     main(args)
