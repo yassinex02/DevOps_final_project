@@ -1,0 +1,21 @@
+name: modeling_conda_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9.7
+  - pandas=2.0.3
+  - pip=23.2.1
+  - requests=2.31.0
+  - openpyxl=3.0.10
+  - matplotlib=3.7.1
+  - numpy=1.23.5
+  - scikit-learn=1.2.2
+  - joblib=1.2.0
+  - imbalanced-learn=0.7.0
+  - pip:
+      - wandb==0.15.12
+
+
+
+
