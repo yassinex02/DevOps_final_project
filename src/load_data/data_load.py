@@ -45,7 +45,7 @@ def load_data(file_path: str, sheet_name: str = None) -> pd.DataFrame:
             df = pd.read_csv(file_path)
         elif file_extension == '.json':
             logging.info(f"Loading JSON file from {file_path}")
-            df = pd.read_json(file_path, orient='split')
+            df = pd.read_json(file_path)
         else:
             logging.error(f"Unsupported file format: {file_extension}")
             raise ValueError(f"Unsupported file format: {file_extension}")

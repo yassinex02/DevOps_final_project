@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from src.data_loader.data_load import load_data
+from src.load_data.data_load import load_data
 
 
 def test_load_excel_file():
@@ -9,7 +9,7 @@ def test_load_excel_file():
     assert isinstance(df, pd.DataFrame)
     assert len(df) == 3
     assert list(df.columns) == ['Name', 'Age', 'Gender']
-    os.remove(file_path)
+   
 
 
 def test_load_csv_file():
@@ -18,7 +18,7 @@ def test_load_csv_file():
     assert isinstance(df, pd.DataFrame)
     assert len(df) == 3
     assert list(df.columns) == ['Name', 'Age', 'Gender']
-    os.remove(file_path)
+    
 
 
 def test_load_json_file():
@@ -27,7 +27,7 @@ def test_load_json_file():
     assert isinstance(df, pd.DataFrame)
     assert len(df) == 3
     assert list(df.columns) == ['Name', 'Age', 'Gender']
-    os.remove(file_path)
+  
 
 
 def test_file_not_found():
@@ -44,3 +44,4 @@ def test_unsupported_file_format():
         df = load_data(file_path)
     except ValueError as e:
         assert str(e) == f"Unsupported file format: .txt"
+
