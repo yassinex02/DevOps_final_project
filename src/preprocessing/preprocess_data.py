@@ -1,129 +1,124 @@
-import argparse
+"""
+This module provides functionality to clean data, preprocess it, and log it to Weights & Biases.
+"""
+
+import os
+import shutil
+from pathlib import Path
 import logging
-from typing import List
+import argparse
 import pandas as pd
-import yaml
+import wandb
 from sklearn.preprocessing import StandardScaler
 
-# Load configurations from config.yaml
-with open("config.yaml", "r", encoding="utf-8") as f:
-    config = yaml.safe_load(f)
-
-# Set up logging
-logging.basicConfig(
-    format=config["logging"]["format"], level=config["logging"]["level"].upper()
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger(__name__)
 
 
-def clean_data(df: pd.DataFrame, drop_columns: List[str] = None) -> pd.DataFrame:
+def clean_data(df: pd.DataFrame, drop_columns: list = None) -> pd.DataFrame:
     """
     Perform data cleaning on a DataFrame.
-
-    Parameters:
-        df (pd.DataFrame): The DataFrame to clean.
-        drop_columns (List[str], optional): List of column names to drop from the DataFrame. Default is None.
-
-    Returns:
-        pd.DataFrame: The cleaned DataFrame.
-
-    Raises:
-        ValueError: If the input DataFrame is empty.
     """
-    logging.info("Starting data cleaning...")
-
+    logger.info("Starting data cleaning...")
     if df.empty:
-        logging.error("Input DataFrame is empty. Cannot perform data cleaning.")
+        logger.error("Input DataFrame is empty. Cannot perform data cleaning.")
         raise ValueError("Input DataFrame is empty. Cannot perform data cleaning.")
 
     try:
-        # Initialize df_cleaned
-        df_cleaned = df
-
-        # Drop specified columns
         if drop_columns:
-            df_cleaned = df.drop(drop_columns, axis=1)
-
-        # Drop NA values
-        df_cleaned = df_cleaned.dropna()
-
-        # Drop duplicates
-        df_cleaned = df_cleaned.drop_duplicates()
-
-        logging.info("Data cleaning complete.")
-
-        return df_cleaned
-
+            drop_columns = [col for col in drop_columns if col]
+            if drop_columns:
+                df = df.drop(drop_columns, axis=1)
+        df = df.dropna()
+        df = df.drop_duplicates()
+        logger.info("Data cleaning complete.")
+        return df
     except Exception as e:
-        logging.error(f"An error occurred during data cleaning: {e}")
+        logger.error("An error occurred during data cleaning: %s", str(e))
         raise
 
 
-def factorize_column(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
+def factorize_columns(df: pd.DataFrame, columns_to_factorize: list = None) -> pd.DataFrame:
     """
-    Factorize the specified column.
+    Factorize specified columns.
     """
+    if not columns_to_factorize:
+        logger.info("No columns specified for factorization. Returning original DataFrame.")
+        return df
+
     try:
-        logging.info(f"Factorizing the {column_name} column.")
         df_factorized = df.copy()
-        df_factorized[column_name] = pd.factorize(df[column_name])[0]
+        for column_name in columns_to_factorize:
+            logger.info(f"Factorizing the {column_name} column.")
+            df_factorized[column_name] = pd.factorize(df_factorized[column_name])[0]
         return df_factorized
     except Exception as e:
-        logging.error(
-            f"An error occurred while factorizing the {column_name} column: {e}"
-        )
+        logger.error("An error occurred while factorizing columns: %s", str(e))
         raise
 
 
-def standardize_columns(
-    df: pd.DataFrame, columns_to_standardize: List[str]
-) -> pd.DataFrame:
+def standardize_columns(df: pd.DataFrame, columns_to_standardize: list = None) -> pd.DataFrame:
     """
     Standardize specified columns using z-score normalization.
     """
+    if not columns_to_standardize:
+        logger.info("No columns specified for standardization. Returning original DataFrame.")
+        return df
+
     try:
-        logging.info(f"Standardizing columns: {columns_to_standardize}")
+        logger.info("Standardizing columns...")
         df_standardized = df.copy()
         scaler = StandardScaler()
-        df_standardized[columns_to_standardize] = scaler.fit_transform(
-            df[columns_to_standardize]
-        )
+        df_standardized[columns_to_standardize] = scaler.fit_transform(df[columns_to_standardize])
         return df_standardized
     except Exception as e:
-        logging.error(f"An error occurred while standardizing columns: {e}")
+        logger.error("An error occurred while standardizing columns: %s", str(e))
         raise
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Clean and preprocess data.")
-    parser.add_argument("input_file", type=str, help="Path to the input CSV file")
-    parser.add_argument(
-        "output_file", type=str, help="Path to save the cleaned data CSV file"
-    )
-    parser.add_argument("--drop_columns", nargs="+", help="List of columns to drop")
+def main(args):
+    """
+    Main function to clean and preprocess data, and log to Weights & Biases.
+    """
+    wandb.init(job_type="data_processing")
 
-    args = parser.parse_args()
+    artifact = wandb.use_artifact(args.input_artifact)
+    artifact_path = artifact.file()
 
-    # Read data from CSV
-    df = pd.read_csv(args.input_file)
+    try:
+        df = pd.read_csv(artifact_path)
 
-    # Clean data
-    if args.drop_columns:
-        df = clean_data(df, drop_columns=args.drop_columns)
+        df_cleaned = clean_data(df, args.drop_columns)
+        df_factorized = factorize_columns(df_cleaned, args.factorize_columns)
+        df_standardized = standardize_columns(df_factorized, args.standardize_columns)
 
-    # Factorize columns from config.yaml
-    factorize_columns = config.get("factorize_columns", [])
-    for column in factorize_columns:
-        df = factorize_column(df, column_name=column)
+        output_artifact = wandb.Artifact(
+            args.output_artifact_name,
+            type=args.output_artifact_type,
+            description=args.output_artifact_description
+        )
+        with output_artifact.new_file("processed_data.csv", mode="w") as f:
+            df_standardized.to_csv(f, index=False)
 
-    # Standardize columns from config.yaml
-    standardize_columns_list = config.get("standardize_columns", [])
-    if standardize_columns_list:
-        df = standardize_columns(df, columns_to_standardize=standardize_columns_list)
+        wandb.log_artifact(output_artifact)
+        logger.info("Data processed and artifact logged to Weights & Biases")
 
-    # Save cleaned data
-    df.to_csv(args.output_file, index=False)
-    logging.info(f"Cleaned data saved to {args.output_file}")
+    finally:
+        os.remove(artifact_path)
+        dir_to_remove = Path(artifact_path).parents[1]
+        if dir_to_remove.exists():
+            shutil.rmtree(dir_to_remove)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Process data and log to wandb")
+    parser.add_argument("--input_artifact", type=str, required=True, help="Name for the input artifact")
+    parser.add_argument("--drop_columns", type=str, nargs='*', help="List of column names to drop")
+    parser.add_argument("--factorize_columns", type=str, nargs='*', help="List of columns to factorize")
+    parser.add_argument("--standardize_columns", type=str, nargs='*', help="List of columns to standardize")
+    parser.add_argument("--output_artifact_name", type=str, required=True, help="Name for the output artifact")
+    parser.add_argument("--output_artifact_type", type=str, required=True, help="Type of the output artifact")
+    parser.add_argument("--output_artifact_description", type=str, help="Description for the output artifact")
+
+    args = parser.parse_args()
+    main(args)
