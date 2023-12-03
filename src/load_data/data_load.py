@@ -3,6 +3,7 @@ import logging
 import os
 import pandas as pd
 import yaml
+import wandb
 
 with open("config.yaml", 'r', encoding='utf-8') as config_file:
     config = yaml.safe_load(config_file)
@@ -10,6 +11,8 @@ with open("config.yaml", 'r', encoding='utf-8') as config_file:
 # Initialize logging
 logging.basicConfig(level=logging.getLevelName(config['logging']['level']),
                     format=config['logging']['format'])
+
+logger = logging.getLogger(__name__)
 
 
 def load_data(file_path: str, sheet_name: str = None) -> pd.DataFrame:
@@ -59,27 +62,56 @@ def load_data(file_path: str, sheet_name: str = None) -> pd.DataFrame:
 
 def main(args):
     """
-    Main function that loads data from a file specified by command line arguments.
+    Load data from a file and log it to Weights & Biases.
+
+    Args:
+        args (argparse.Namespace): Command line arguments.
     """
-    try:
-        # Load the data using the arguments from argparse
-        df= load_data(args.file_path, args.sheet_name)
-        # Further processing or analysis can be done here with the loaded data_frame
-        print(f"Data loaded successfully with shape: {df.shape}")
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        raise
+    wandb.init(job_type="data_loader")
 
-if __name__ == '__main__':
-    # Initialize the argument parser
-    parser = argparse.ArgumentParser(description="Load data into a DataFrame from various file formats.")
+    df = load_data(args.file_path, args.sheet_name)
 
-    # Add arguments to the parser
-    parser.add_argument('file_path', type=str, help='The path to the data file.')
-    parser.add_argument('--sheet_name', type=str, default=None, help='The name of the sheet to read if the file is an Excel file.')
+    artifact = wandb.Artifact(
+        args.artifact_name,
+        type=args.artifact_type,
+        description=args.artifact_description
+    )
+    with artifact.new_file("raw_data.csv", mode="w") as f:
+        df.to_csv(f, index=False)
 
-    # Parse the arguments
+    wandb.log_artifact(artifact)
+    logger.info("Data loaded and artifact logged to Weights & Biases")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Load data and log to wandb")
+    parser.add_argument(
+        "--file_path",
+        type=str,
+        required=True,
+        help="Path to the data file"
+    )
+    parser.add_argument(
+        "--sheet_name",
+        type=str,
+        help="Sheet name if Excel file"
+    )
+    parser.add_argument(
+        "--artifact_name",
+        type=str,
+        required=True,
+        help="Name for the W&B artifact"
+    )
+    parser.add_argument(
+        "--artifact_type",
+        type=str,
+        help="Type of the artifact"
+    )
+    parser.add_argument(
+        "--artifact_description",
+        type=str,
+        help="Description for the artifact"
+    )
+
     args = parser.parse_args()
-
-    # Call the main function with the parsed arguments
     main(args)
