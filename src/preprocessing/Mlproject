@@ -1,0 +1,39 @@
+name: data_processing
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      input_artifact:
+        description: Name for the input artifact
+        type: str
+      drop_columns:
+        description: List of column names to drop
+        type: list
+        default: []
+      factorize_columns:
+        description: List of columns to factorize
+        type: list
+        default: []
+      standardize_columns:
+        description: List of columns to standardize
+        type: list
+        default: []
+      output_artifact_name:
+        description: Name for the output artifact
+        type: str
+      output_artifact_type:
+        description: Type of the output artifact
+        type: str
+      output_artifact_description:
+        description: Description for the output artifact
+        type: str
+        default: ""
+    command: >-
+      python data_processing.py --input_artifact {input_artifact} \
+                                --drop_columns {drop_columns} \
+                                --factorize_columns {factorize_columns} \
+                                --standardize_columns {standardize_columns} \
+                                --output_artifact_name {output_artifact_name} \
+                                --output_artifact_type {output_artifact_type} \
+                                --output_artifact_description {output_artifact_description}
