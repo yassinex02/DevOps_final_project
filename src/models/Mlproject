@@ -39,7 +39,3 @@ entry_points:
                                   --output_artifact_name {output_artifact_name} \
                                   --output_artifact_type {output_artifact_type} \
                                   --output_artifact_description {output_artifact_description}"
-
-
-
-                    

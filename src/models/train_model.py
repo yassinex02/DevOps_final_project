@@ -248,15 +248,13 @@ def main(args):
     The main entry point of the application that performs data splitting,
     model training, and evaluation based on the provided command line arguments.
     """
+    wandb.init(job_type="model_training")
 
     # Path to the input artifact
     input_artifact = wandb.use_artifact(args.input_artifact)
     input_artifact_path = input_artifact.file()
 
-
     try:
-        wandb.init(job_type="model_training")
-
         # Load input artifact (cleaned data)
         df = pd.read_csv(input_artifact_path)
 
@@ -282,24 +280,19 @@ def main(args):
         model_artifact.add_file(model_path)
         wandb.log_artifact(model_artifact)
 
-        # Save and log evaluation metrics and baselines as artifacts
-        metrics_report_path = "reports/_metrics_report.csv"
-        baseline_report_path = "reports/_baseline_report.csv"
-        roc_curve_path = "reports/Logistic_Regression_model_roc_curve.png"
-
-        metrics_artifact = wandb.Artifact(
+        # Save and log all files in the reports folder as an artifact
+        reports_artifact = wandb.Artifact(
             "evaluation_metrics", 
             type="metrics",
             description="Evaluation metrics of the model"
         )
-        metrics_artifact.add_file(metrics_report_path)
-        metrics_artifact.add_file(baseline_report_path)
-        metrics_artifact.add_file(roc_curve_path)
-        wandb.log_artifact(metrics_artifact)
+        reports_artifact.add_dir("reports/")
+        wandb.log_artifact(reports_artifact)
 
     except Exception as e:
         logging.error(f"An error occurred in the main function: {e}")
         raise
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Machine Learning Model Building and Evaluation")
