@@ -3,8 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.linear_model import LogisticRegression
-from src.interpretability.model_interpretability import (
-    extract_feature_importance, run_lime_analysis, run_shap_analysis)
+from src.interpretability.model_interpretability import extract_feature_importance, run_lime_analysis, run_shap_analysis
 
 
 def test_run_shap_analysis(mocker):
@@ -51,3 +50,4 @@ def test_extract_feature_importance(mocker):
 
     # Run the function
     extract_feature_importance(mock_model, mock_X)
+

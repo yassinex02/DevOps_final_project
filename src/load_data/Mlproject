@@ -1,0 +1,32 @@
+name: data_loading
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      file_path:
+        description: Path to the data file
+        type: str
+      sheet_name:
+        description: Name of the sheet to read if the file is an Excel file
+        type: str
+        default: ""
+      artifact_name:
+        description: Name for the W&B artifact that will be created
+        type: str
+      artifact_type:
+        description: Type of the artifact to create
+        type: str
+        default: raw_data
+      artifact_description:
+        description: Description for the artifact
+        type: str
+        default: ""
+    command: >-
+      python data_load.py --file_path {file_path} \
+                                    --sheet_name {sheet_name} \
+                                    --artifact_name {artifact_name} \
+                                    --artifact_type {artifact_type} \
+                                    --artifact_description {artifact_description}
+
+                                    
