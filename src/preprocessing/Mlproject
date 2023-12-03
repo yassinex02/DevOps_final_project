@@ -30,10 +30,11 @@ entry_points:
         type: str
         default: ""
     command: >-
-      python data_processing.py --input_artifact {input_artifact} \
+      python preprocess_data.py --input_artifact {input_artifact} \
                                 --drop_columns {drop_columns} \
                                 --factorize_columns {factorize_columns} \
                                 --standardize_columns {standardize_columns} \
                                 --output_artifact_name {output_artifact_name} \
                                 --output_artifact_type {output_artifact_type} \
                                 --output_artifact_description {output_artifact_description}
+

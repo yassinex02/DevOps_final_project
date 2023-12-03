@@ -23,8 +23,11 @@ entry_points:
         type: str
         default: ""
     command: >-
-      python data_loader.py --file_path {file_path} \
+      python data_load.py --file_path {file_path} \
                                     --sheet_name {sheet_name} \
                                     --artifact_name {artifact_name} \
                                     --artifact_type {artifact_type} \
                                     --artifact_description {artifact_description}
+
+
+# to run the above command, use the following command with mlflow run:

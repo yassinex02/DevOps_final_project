@@ -31,7 +31,7 @@ entry_points:
       output_artifact_description:
         description: Description for the output artifact
         type: str
-    command: "python modeling.py --input_artifact {input_artifact} \
+    command: "python train_model.py --input_artifact {input_artifact} \
                                   --target_column {target_column} \
                                   --test_size {test_size} \
                                   --random_state {random_state} \

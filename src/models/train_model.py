@@ -25,6 +25,7 @@ from sklearn.model_selection import train_test_split
 logging.basicConfig(level=logging.INFO)
 
 
+
 def split_data(
     df: pd.DataFrame, target_column: str, test_size: float, random_state: int
 ) -> Tuple[pd.DataFrame]:
