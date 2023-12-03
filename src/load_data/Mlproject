@@ -29,5 +29,4 @@ entry_points:
                                     --artifact_type {artifact_type} \
                                     --artifact_description {artifact_description}
 
-
-# to run the above command, use the following command with mlflow run:
+                                    
