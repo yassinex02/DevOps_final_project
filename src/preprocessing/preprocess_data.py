@@ -1,7 +1,6 @@
 """
 This module provides functionality to clean data, preprocess it, and log it to Weights & Biases.
 """
-
 import os
 import shutil
 from pathlib import Path
@@ -84,12 +83,30 @@ def main(args):
 
     artifact = wandb.use_artifact(args.input_artifact)
     artifact_path = artifact.file()
+    
 
     try:
         df = pd.read_csv(artifact_path)
+        
+        # Print debugging information
+        print("Value of args.drop_columns before processing:", args.drop_columns)
+
+        # Convert the string '[]' to an actual empty list
+        if args.drop_columns == ['[]']:
+            args.drop_columns = []
+
+        # Print debugging information after processing
+        print("Value of args.drop_columns after processing:", args.drop_columns)
 
         df_cleaned = clean_data(df, args.drop_columns)
         df_factorized = factorize_columns(df_cleaned, args.factorize_columns)
+
+        print("Standardize columns Before:", args.standardize_columns)
+
+        args.standardize_columns = args.standardize_columns[0].split(' ')
+
+        print("Standardize columns After:", args.standardize_columns)
+
         df_standardized = standardize_columns(df_factorized, args.standardize_columns)
 
         output_artifact = wandb.Artifact(
@@ -122,3 +139,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
+
