@@ -2,67 +2,29 @@ import argparse
 import logging
 from typing import Optional
 import pandas as pd
-import yaml
 from ydata_profiling import ProfileReport
+import wandb
 
-# Function to read YAML configuration
-
-
-def read_yaml_config(file_path: str) -> dict:
-    try:
-        with open(file_path, 'r') as f:
-            config = yaml.safe_load(f)
-        return config
-    except Exception as e:
-        raise RuntimeError(f"Failed to read the YAML configuration file: {e}")
-
-
-# Read the YAML configuration file
-config_file_path = "config.yaml"
-config = read_yaml_config(config_file_path)
 
 # Initialize logging
-logging.basicConfig(
-    format=config['logging']['format'], level=config['logging']['level'].upper())
-
-EXPECTED_COLUMNS = config.get('expected_columns', [])
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger(__name__)
 
 
-def generate_profiling_report(df: pd.DataFrame, output_file: str, columns: Optional[list] = None):
+
+
+def generate_profiling_report(df: pd.DataFrame,report_title: str ,output_file: str, expected_columns: list, columns: Optional[list] = None):
     """
     Generate a profiling report from a DataFrame using ydata-profiling's ProfileReport.
-
-    Parameters:
-        df (pd.DataFrame): The DataFrame to profile.
-        output_file (str): The path to the file where the report will be saved.
-        columns (list, optional): List of column names to include in the profiling report. If None, all columns are included.
-
-    Returns:
-        None
-
-    Raises:
-        ValueError: If the DataFrame is empty or if specified columns are not present.
+    ... [rest of the docstring]
     """
-    # Get title from config
-    report_title = config.get('profile_report', {}).get(
-        'title', 'Profiling Report')
     logging.info("Generating profiling report...")
 
-    # Validate input DataFrame
-    if df.empty:
-        logging.error(
-            "Input DataFrame is empty. Cannot generate profiling report.")
-        raise ValueError(
-            "Input DataFrame is empty. Cannot generate profiling report.")
-
     # Check if expected columns exist in the DataFrame
-    missing_expected_columns = [
-        col for col in EXPECTED_COLUMNS if col not in df.columns]
+    missing_expected_columns = [col for col in expected_columns if col not in df.columns]
     if missing_expected_columns:
-        logging.error(
-            f"Expected columns not found in the DataFrame: {missing_expected_columns}")
-        raise ValueError(
-            f"Expected columns not found in the DataFrame: {missing_expected_columns}")
+        logging.error(f"Expected columns not found in the DataFrame: {missing_expected_columns}")
+        raise ValueError(f"Expected columns not found in the DataFrame: {missing_expected_columns}")
 
     # Select specified columns if provided
     selected_df = df[columns] if columns else df
@@ -73,32 +35,55 @@ def generate_profiling_report(df: pd.DataFrame, output_file: str, columns: Optio
         profile.to_file(output_file)
         logging.info(f"Profiling report generated and saved to {output_file}.")
     except Exception as e:
-        logging.error(
-            f"An error occurred while generating the profiling report: {e}")
+        logging.error(f"An error occurred while generating the profiling report: {e}")
         raise
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description='Generate a profiling report from a DataFrame.')
-    parser.add_argument('input_filepath', type=str,
-                        help='Path to the input CSV file')
-    parser.add_argument('output_filepath', type=str,
-                        help='Path to save the profiling report')
-    parser.add_argument('--columns', type=str, default=None,
-                        help='List of column names to include in the profiling report. If not provided, all columns are included.')
 
-    args = parser.parse_args()
+def main(args):
 
-    # Read the DataFrame from the input file or any other source
-    df = pd.read_csv(args.input_filepath)
+    wandb.init(job_type="data_exploration")
 
-    # Split the columns string into a list
-    columns_list = args.columns.split(',') if args.columns else None
+    artifact = wandb.use_artifact(args.input_artifact)
+    artifact_path = artifact.file()
 
-    # Call the generate_profiling_report function with the DataFrame and other arguments
-    generate_profiling_report(df, args.output_filepath, columns_list)
+    # Load data
+    try:
+        df = pd.read_csv(artifact_path)
 
+        # Convert the string '[]' to an actual empty list
+        if args.columns == ['[]']:
+            args.columns = []
+        
+        # Split comma-separated strings into lists
+        args.expected_columns = args.expected_columns[0].split(' ')
+        args.columns = args.columns[0].split(' ')
+
+        # Generate profiling report
+        generate_profiling_report(df, args.report_title, args.output_file, args.expected_columns, args.columns)
+
+        # Log the profiling report as an artifact
+        output_artifact = wandb.Artifact(
+            name=args.output_artifact_name,
+            type="profiling_report",
+            description="Data profiling report generated by ydata-profiling"
+        )
+        output_artifact.add_file(args.output_file)
+        wandb.log_artifact(output_artifact)
+
+        logger.info("Profiling report generated and logged to Weights & Biases.")
+    except Exception as e:
+        logger.error(f"An error occurred in main function: {e}")
+        raise
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Generate and log a data profiling report to Weights & Biases.")
+    parser.add_argument("--input_file", type=str, required=True, help="Path to the input CSV file.")
+    parser.add_argument("--report_title", type=str, required=True, help="Title of the profiling report.")
+    parser.add_argument("--output_file", type=str, required=True, help="File path for the output profiling report.")
+    parser.add_argument("--expected_columns", type=str, nargs='*', required=True, help="List of expected columns in the DataFrame.")
+    parser.add_argument("--columns", type=str, nargs='*', help="List of columns to include in the report, if not all.")
+    parser.add_argument("--output_artifact_name", type=str, required=True, help="Name for the output artifact in Weights & Biases.")
+
+    args = parser.parse_args()
+    main(args)
