@@ -1,8 +1,7 @@
-# file_paths:
 main:
   project_name: Loan_Default_Prediction
-  # experiment_name: dev_2
-  steps: loader,exploration,preprocessing,model_
+  experiment_name: trial
+  steps: loader,exploration,preprocessing,model_building
 
 data_load:
   file_path: /workspaces/DEVOPS_fINAL_PROJECT/data/raw/bankloan.csv
