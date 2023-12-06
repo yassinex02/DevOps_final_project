@@ -1,0 +1,13 @@
+name: prep_conda
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9.18
+  - pandas=2.0.3
+  - pip=23.2.1
+  - requests=2.31.0
+  - openpyxl=3.0.10
+  - pip:
+      - wandb==0.15.12
+      - ydata_profiling==4.6.1
