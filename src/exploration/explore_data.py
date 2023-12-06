@@ -6,10 +6,10 @@ from ydata_profiling import ProfileReport
 import wandb
 
 
+
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 logger = logging.getLogger(__name__)
-
 
 
 
@@ -37,7 +37,6 @@ def generate_profiling_report(df: pd.DataFrame,report_title: str ,output_file: s
     except Exception as e:
         logging.error(f"An error occurred while generating the profiling report: {e}")
         raise
-
 
 
 def main(args):
