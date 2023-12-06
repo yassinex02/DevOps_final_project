@@ -26,7 +26,8 @@ def main(config: DictConfig):
 
     # Steps to execute
     steps_par = config['main']['steps']
-    active_steps = steps_par.split(",") if steps_par != "all" else _steps
+    # active_steps = steps_par.split(",") if steps_par != "all" else _steps
+    active_steps = steps_par if steps_par != ["all"] else _steps
 
      # You can get the path at the root of the MLflow project with this:
     root_path = hydra.utils.get_original_cwd()
@@ -79,8 +80,8 @@ def main(config: DictConfig):
                 parameters={
                     "input_artifact": config['data_load']['artifact_name'] + ":latest",
                     "drop_columns": config["preprocess_data"]["drop_columns"],
-                    "factorize_columns": config["preprocess_data"]["factorize_columns"],
-                    "standardize_columns": config["preprocess_data"]["standardize_columns"],
+                    "factorize_columns": " ".join(config["preprocess_data"]["factorize_columns"]),
+                    "standardize_columns": " ".join(config["preprocess_data"]["standardize_columns"]),
                     "output_artifact_name": config["preprocess_data"]["output_artifact_name"],
                     "output_artifact_type": config["preprocess_data"]["output_artifact_type"],
                     "output_artifact_description": config["preprocess_data"]["output_artifact_description"],

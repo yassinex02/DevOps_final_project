@@ -6,7 +6,6 @@ from ydata_profiling import ProfileReport
 import wandb
 
 
-
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 logger = logging.getLogger(__name__)
