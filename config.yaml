@@ -13,8 +13,8 @@ data_load:
 explore_data:
   report_title: "Exploratory Data Analysis Report"
   output_file: /workspaces/DevOps_final_project/reports/output_profile_report.html 
-  expected_columns: ['age', 'ed', 'employ', 'address', 'income', 'debtinc', 'creddebt', 'othdebt', 'default']
-  columns: ['age', 'ed', 'employ', 'address', 'income', 'debtinc', 'creddebt', 'othdebt', 'default']
+  expected_columns : ['age ed employ address income debtinc creddebt othdebt default']
+  columns: ['age ed employ address income debtinc creddebt othdebt default']
   output_artifact_name: exploration_report
   output_artifact_type: report
   output_artifact_description: "Exploratory Data Analysis Report"

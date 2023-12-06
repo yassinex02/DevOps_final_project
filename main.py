@@ -18,7 +18,8 @@ _steps = [
     'model_building',
 ]
 
-@hydra.main(config_path="configs", config_name="config")
+
+@hydra.main(config_name="config")
 def main(config: DictConfig):
     # Setup the wandb experiment. All runs will be grouped under this name
     os.environ["WANDB_PROJECT"] = config["main"]["project_name"]
@@ -60,8 +61,8 @@ def main(config: DictConfig):
                     "input_artifact": config['data_load']['artifact_name'] + ":latest",
                     "report_title": config["explore_data"]["report_title"],
                     "output_file": config["explore_data"]["output_file"],
-                    "expected_columns": config["explore_data"]["expected_columns"],
-                    "columns": config["explore_data"]["columns"],
+                    "expected_columns": " ".join(config["explore_data"]["expected_columns"]),
+                    "columns": " ".join(config["explore_data"]["columns"]),
                     "output_artifact_name": config["explore_data"]["output_artifact_name"],
                     "output_artifact_type": config["explore_data"]["output_artifact_type"],
                     "output_artifact_description": config["explore_data"]["output_artifact_description"],
@@ -111,4 +112,6 @@ def main(config: DictConfig):
         except Exception as e:
                 logger.error("MLflow project failed: %s", e)
                 raise
-         
+
+if __name__ == "__main__":
+    main()
