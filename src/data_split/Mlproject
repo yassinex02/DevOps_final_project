@@ -1,0 +1,23 @@
+name: Split_data
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+        input:
+            type: string
+            description: The name of the input artifact
+        target_column:
+            type: string
+            description: The name of the target column  
+        test_size:
+            type: float
+            description: The size of the test split as a fraction of the dataset
+        random_state:
+            type: int
+            description: Seed for random number generator
+    
+    command: "python split_train_test.py --input {input} \
+                                         --target_column {target_column} --test_size {test_size} \
+                                         --test_size {test_size} \
+                                         --random_state {random_state}"
