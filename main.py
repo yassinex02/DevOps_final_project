@@ -100,7 +100,7 @@ def main(config: DictConfig):
                 os.path.join(root_path, "src", "data_split"),
                 "main",
                 parameters={
-                    "input_artifact": config['preprocess_data']['output_artifact_name'] + ":latest",
+                    "input": config['preprocess_data']['output_artifact_name'] + ":latest",
                     "target_column": config["split_data"]["target_column"],
                     "test_size": config["split_data"]["test_size"],
                     "random_state": config["split_data"]["random_state"],
