@@ -1,0 +1,41 @@
+name: data_exploration
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      input_artifact:
+        description: Name for the input artifact
+        type: str
+      report_title:
+        description: Title of the profiling report
+        type: str
+      output_file:
+        description: File path for the output profiling report
+        type: str
+      expected_columns:
+        description: List of expected columns in the DataFrame
+        type: str
+      columns:
+        description: List of columns to include in the report, if not all
+        type: str
+        default: []
+      output_artifact_name:
+        description: Name for the output artifact
+        type: str
+      output_artifact_type:
+        description: Type of the output artifact
+        type: str
+      output_artifact_description:
+        description: Description for the output artifact
+        type: str
+        default: ""
+    command: >-
+      python explore_data.py --input_artifact {input_artifact} \
+                              --report_title {report_title} \
+                              --output_file {output_file} \
+                              --expected_columns {expected_columns} \
+                              --columns {columns} \
+                              --output_artifact_name {output_artifact_name} \
+                              --output_artifact_type {output_artifact_type} \
+                              --output_artifact_description {output_artifact_description}
