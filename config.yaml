@@ -1,7 +1,7 @@
 main:
   project_name: Loan_Default_Prediction
   experiment_name: trial
-  steps: loader,exploration,preprocessing,model_building
+  steps: loader,exploration,preprocessing,data_split,model_building
 
 data_load:
   file_path: /workspaces/DevOps_final_project/data/raw/bankloan.csv
@@ -23,26 +23,34 @@ explore_data:
 preprocess_data:
   # input_artifact: raw_bankloan_data:latest
   drop_columns: []
-  factorize_columns: ['ed']
-  standardize_columns: ['income debtinc creddebt othdebt']
+  # factorize_columns: ['ed']
+  # standardize_columns: ['income debtinc creddebt othdebt']
   output_artifact_name: processed_bankloan_data
   output_artifact_type: processed_data
   output_artifact_description: "Processed Bankloan Data"
 
-train_model:
+split_data:
   # input_artifact: processed_bankloan_data:latest
   target_column: default
   test_size: 0.2
   random_state: 42
-  class_weight: balanced
-  output_artifact_name: trained_model
-  output_artifact_type: model
-  output_artifact_description: "Trained Logistic Regression Model"
 
+model_building:
+  X_train_artifact: X_train_data
+  y_train_artifact: y_train_data
+  val_size: 0.2
+  numerical_cols: ['age', 'employ', 'address', 'income', 'debtinc', 'creddebt', 'othdebt']
+  factorize_cols: ['ed']
+  hyperparameters:
+    C: 0.1
+    solver: lbfgs
+    class_weight: balanced
+  model_artifact: logistic_regression
+  random_seed: 44
+        
 logging:
   format: "%(asctime)s [%(levelname)s] %(message)s"
   level: INFO
-
 
 #   output_file: output_profile_report.html
 

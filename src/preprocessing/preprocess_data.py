@@ -37,42 +37,42 @@ def clean_data(df: pd.DataFrame, drop_columns: list = None) -> pd.DataFrame:
         raise
 
 
-def factorize_columns(df: pd.DataFrame, columns_to_factorize: list = None) -> pd.DataFrame:
-    """
-    Factorize specified columns.
-    """
-    if not columns_to_factorize:
-        logger.info("No columns specified for factorization. Returning original DataFrame.")
-        return df
+# def factorize_columns(df: pd.DataFrame, columns_to_factorize: list = None) -> pd.DataFrame:
+#     """
+#     Factorize specified columns.
+#     """
+#     if not columns_to_factorize:
+#         logger.info("No columns specified for factorization. Returning original DataFrame.")
+#         return df
 
-    try:
-        df_factorized = df.copy()
-        for column_name in columns_to_factorize:
-            logger.info(f"Factorizing the {column_name} column.")
-            df_factorized[column_name] = pd.factorize(df_factorized[column_name])[0]
-        return df_factorized
-    except Exception as e:
-        logger.error("An error occurred while factorizing columns: %s", str(e))
-        raise
+#     try:
+#         df_factorized = df.copy()
+#         for column_name in columns_to_factorize:
+#             logger.info(f"Factorizing the {column_name} column.")
+#             df_factorized[column_name] = pd.factorize(df_factorized[column_name])[0]
+#         return df_factorized
+#     except Exception as e:
+#         logger.error("An error occurred while factorizing columns: %s", str(e))
+#         raise
 
 
-def standardize_columns(df: pd.DataFrame, columns_to_standardize: list = None) -> pd.DataFrame:
-    """
-    Standardize specified columns using z-score normalization.
-    """
-    if not columns_to_standardize:
-        logger.info("No columns specified for standardization. Returning original DataFrame.")
-        return df
+# def standardize_columns(df: pd.DataFrame, columns_to_standardize: list = None) -> pd.DataFrame:
+#     """
+#     Standardize specified columns using z-score normalization.
+#     """
+#     if not columns_to_standardize:
+#         logger.info("No columns specified for standardization. Returning original DataFrame.")
+#         return df
 
-    try:
-        logger.info("Standardizing columns...")
-        df_standardized = df.copy()
-        scaler = StandardScaler()
-        df_standardized[columns_to_standardize] = scaler.fit_transform(df[columns_to_standardize])
-        return df_standardized
-    except Exception as e:
-        logger.error("An error occurred while standardizing columns: %s", str(e))
-        raise
+#     try:
+#         logger.info("Standardizing columns...")
+#         df_standardized = df.copy()
+#         scaler = StandardScaler()
+#         df_standardized[columns_to_standardize] = scaler.fit_transform(df[columns_to_standardize])
+#         return df_standardized
+#     except Exception as e:
+#         logger.error("An error occurred while standardizing columns: %s", str(e))
+#         raise
 
 
 def main(args):
@@ -98,45 +98,61 @@ def main(args):
         # Print debugging information after processing
         print("Value of args.drop_columns after processing:", args.drop_columns)
 
+                # Clean data
         df_cleaned = clean_data(df, args.drop_columns)
-        df_factorized = factorize_columns(df_cleaned, args.factorize_columns)
 
-        print("Standardize columns Before:", args.standardize_columns)
-
-        args.standardize_columns = args.standardize_columns[0].split(' ')
-
-        print("Standardize columns After:", args.standardize_columns)
-
-        df_standardized = standardize_columns(df_factorized, args.standardize_columns)
-
+        # Log cleaned data as output artifact
         output_artifact = wandb.Artifact(
             args.output_artifact_name,
             type=args.output_artifact_type,
             description=args.output_artifact_description
         )
-        with output_artifact.new_file("processed_data.csv", mode="w") as f:
-            df_standardized.to_csv(f, index=False)
+        with output_artifact.new_file("cleaned_data.csv", mode="w") as f:
+            df_cleaned.to_csv(f, index=False)
 
         wandb.log_artifact(output_artifact)
-        logger.info("Data processed and artifact logged to Weights & Biases")
+        logger.info("Data cleaned and artifact logged to Weights & Biases")
 
     finally:
+        # Cleanup: Delete the local file downloaded from wandb
         os.remove(artifact_path)
+        # Additionally, if you want to delete the entire directory:
         dir_to_remove = Path(artifact_path).parents[1]
-        if dir_to_remove.exists():
+        if dir_to_remove.exists():  # Ensure the directory exists before trying to delete it
             shutil.rmtree(dir_to_remove)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process data and log to wandb")
-    parser.add_argument("--input_artifact", type=str, required=True, help="Name for the input artifact")
-    parser.add_argument("--drop_columns", type=str, nargs='*', help="List of column names to drop")
-    parser.add_argument("--factorize_columns", type=str, nargs='*', help="List of columns to factorize")
-    parser.add_argument("--standardize_columns", type=str, nargs='*', help="List of columns to standardize")
-    parser.add_argument("--output_artifact_name", type=str, required=True, help="Name for the output artifact")
-    parser.add_argument("--output_artifact_type", type=str, required=True, help="Type of the output artifact")
-    parser.add_argument("--output_artifact_description", type=str, help="Description for the output artifact")
+    parser = argparse.ArgumentParser(description="Clean data and log to wandb")
+    parser.add_argument(
+        "--input_artifact",
+        type=str,
+        required=True,
+        help="Name for the input artifact"
+    )
+    parser.add_argument(
+        "--drop_columns",
+        type=str,
+        nargs='*',
+        help="List of column names to drop"
+    )
+    parser.add_argument(
+        "--output_artifact_name",
+        type=str,
+        required=True,
+        help="Name for the output artifact"
+    )
+    parser.add_argument(
+        "--output_artifact_type",
+        type=str,
+        required=True,
+        help="Type of the output artifact"
+    )
+    parser.add_argument(
+        "--output_artifact_description",
+        type=str,
+        help="Description for the output artifact"
+    )
 
     args = parser.parse_args()
     main(args)
-

@@ -15,6 +15,7 @@ _steps = [
     'loader',
     'exploration',
     'preprocessing',
+    'data_split',
     'model_building',
 ]
 
@@ -81,8 +82,8 @@ def main(config: DictConfig):
                 parameters={
                     "input_artifact": config['data_load']['artifact_name'] + ":latest",
                     "drop_columns": config["preprocess_data"]["drop_columns"],
-                    "factorize_columns": " ".join(config["preprocess_data"]["factorize_columns"]),
-                    "standardize_columns": " ".join(config["preprocess_data"]["standardize_columns"]),
+                    # "factorize_columns": " ".join(config["preprocess_data"]["factorize_columns"]),
+                    # "standardize_columns": " ".join(config["preprocess_data"]["standardize_columns"]),
                     "output_artifact_name": config["preprocess_data"]["output_artifact_name"],
                     "output_artifact_type": config["preprocess_data"]["output_artifact_type"],
                     "output_artifact_description": config["preprocess_data"]["output_artifact_description"],
@@ -91,22 +92,47 @@ def main(config: DictConfig):
         except Exception as e:
                 logger.error("MLflow project failed: %s", e)
                 raise
-        
-    if "model_building" in active_steps:
+    
+    if "data_split" in active_steps:
+        # Run the data split step
+        try:
+            _ = mlflow.run(
+                os.path.join(root_path, "src", "data_split"),
+                "main",
+                parameters={
+                    "input": config['preprocess_data']['output_artifact_name'] + ":latest",
+                    "target_column": config["split_data"]["target_column"],
+                    "test_size": config["split_data"]["test_size"],
+                    "random_state": config["split_data"]["random_state"],
+                },
+            )
+        except Exception as e:
+                logger.error("MLflow project failed: %s", e)
+                raise
+
+    if "model_building" in active_steps: 
+        # Create a temporary file to store the hyperparameters
+        with tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.json') as hyperparam_file:
+
+            json.dump(omegaconf.OmegaConf.to_container(
+            config["model_building"]["hyperparameters"]), hyperparam_file)
+
+            hyperparam_file_path = hyperparam_file.name
+
         # Run the model building step
         try:
             _ = mlflow.run(
                 os.path.join(root_path, "src", "models"),
                 "main",
                 parameters={
-                    "input_artifact": config['preprocess_data']['output_artifact_name'] + ":latest",
-                    "target_column": config["train_model"]["target_column"],
-                    "test_size": config["train_model"]["test_size"],
-                    "random_state": config["train_model"]["random_state"],
-                    "class_weight": config["train_model"]["class_weight"],
-                    "output_artifact_name": config["train_model"]["output_artifact_name"],
-                    "output_artifact_type": config["train_model"]["output_artifact_type"],
-                    "output_artifact_description": config["train_model"]["output_artifact_description"],
+                    "X_train_artifact": config["model_building"]['X_train_artifact'] + ":latest",
+                    "y_train_artifact": config["model_building"]['y_train_artifact'] + ":latest",
+                    "val_size": config["model_building"]["val_size"],
+                    "numerical_cols": " ".join(config["model_building"]["numerical_cols"]),
+                    "factorize_cols": " ".join(config["model_building"]["factorize_cols"]),
+                    "hyperparameters": hyperparam_file_path,
+                    "model_artifact": config["model_building"]["model_artifact"],
+                    "random_seed": config["model_building"]["random_seed"],
                 },
             )
         except Exception as e:
@@ -115,3 +141,6 @@ def main(config: DictConfig):
 
 if __name__ == "__main__":
     main()
+
+
+

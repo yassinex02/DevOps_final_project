@@ -1,48 +1,52 @@
 import argparse
+import json
 import logging
+import os
+import shutil
 from typing import Tuple
-import matplotlib.pyplot as plt
-import numpy as np
+import mlflow
 import pandas as pd
-from imblearn.under_sampling import RandomUnderSampler
 import wandb
-from joblib import dump
-from sklearn.dummy import DummyClassifier
-from sklearn import metrics
+import numpy as np
+from imblearn.under_sampling import RandomUnderSampler
+from mlflow.models import infer_signature
+from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
-    confusion_matrix,
     f1_score,
     precision_score,
     recall_score,
     roc_auc_score,
+    confusion_matrix,
 )
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from transformer import FactorizeTransformer
+
+# Setting up logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger(__name__)
 
 
-# Initialize logging
-logging.basicConfig(level=logging.INFO)
+def get_preprocessing_pipeline(numerical_cols, factorize_cols):
+    if isinstance(numerical_cols, str):
+        numerical_cols = [numerical_cols]
 
+    if isinstance(factorize_cols, str):
+        factorize_cols = [factorize_cols]
 
+    numerical_transformer = StandardScaler()
+    factorize_transformer = FactorizeTransformer()
 
-def split_data(
-    df: pd.DataFrame, target_column: str, test_size: float, random_state: int
-) -> Tuple[pd.DataFrame]:
-    """
-    Split the data into training and test sets.
-    """
-    try:
-        logging.info("Splitting the data into training and test sets.")
-        X = df.drop([target_column], axis=1)
-        y = df[target_column]
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state
-        )
-        return X_train, X_test, y_train, y_test
-    except Exception as e:
-        logging.error(f"An error occurred while splitting the data: {e}")
-        raise
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numerical_transformer, numerical_cols),
+            ('fact', factorize_transformer, factorize_cols),
+        ])
+
+    return preprocessor
 
 
 def random_undersampling(
@@ -61,64 +65,21 @@ def random_undersampling(
             "An error occurred while random undersampling the data: %s", e)
         raise
 
-
-def perform_baselining(X_test: pd.DataFrame, y_test: pd.Series) -> pd.DataFrame:
-    """
-    Perform baselining using both Majority Class and Stratified Random Guessing.
-    """
-    try:
-        logging.info("Performing baselining using DummyClassifier.")
-        baselines = {}
-        
-        # Dummy feature array for baselining
-        dummy_X = np.zeros((len(y_test), 1))
-
-        # Majority Class (Zero-Rule Algorithm)
-        majority_baseline = DummyClassifier(strategy='most_frequent')
-        majority_baseline.fit(dummy_X, y_test)
-        y_pred_majority = majority_baseline.predict(dummy_X)
-        baselines['Majority Class'] = accuracy_score(y_test, y_pred_majority)
-        
-        # Stratified Random Guessing
-        stratified_baseline = DummyClassifier(strategy='stratified')
-        stratified_baseline.fit(dummy_X, y_test)
-        y_pred_stratified = stratified_baseline.predict(dummy_X)
-        baselines['Stratified Random'] = accuracy_score(y_test, y_pred_stratified)
-        
-        return pd.DataFrame([baselines])
-    except Exception as e:
-        logging.error(f"An error occurred while performing baselining: {e}")
-        raise
-
-
 def train_logistic_regression(
-    X_train: pd.DataFrame, y_train: pd.Series, random_state: int, class_weight=None
-) -> LogisticRegression:
-    """Train a logistic regression model."""
-    try:
-        logging.info("Training a logistic regression model.")
-        lr_model = LogisticRegression(
-            random_state=random_state, class_weight=class_weight
-        )
-        lr_model.fit(X_train, y_train)
-        return lr_model
-    except Exception as e:
-        logging.error(
-            f"An error occurred while training the logistic regression model: {e}"
-        )
-        raise
+    X_train: pd.DataFrame, y_train: pd.Series, hyperparameters) -> LogisticRegression:
 
+    model = LogisticRegression(**hyperparameters)
+    model.fit(X_train, y_train)
+    return model
 
 def evaluate_model(
-    model: LogisticRegression, X_test: pd.DataFrame, y_test: pd.Series
+     y_test: pd.Series, y_pred: pd.DataFrame, y_prob: pd.DataFrame
 ) -> pd.DataFrame:
     """
     Evaluate the model using various metrics including 'Specificity', 'PPV', and 'NPV'.
     """
     try:
         logging.info("Evaluating the model.")
-        y_pred = model.predict(X_test)
-        y_prob = model.predict_proba(X_test)[:, 1]
         cm = confusion_matrix(y_test, y_pred)
 
         # Calculating specificity, PPV and NPV
@@ -136,7 +97,7 @@ def evaluate_model(
             "PPV": ppv,
             "NPV": npv,
             "ROC AUC": roc_auc_score(y_test, y_prob),
-            "Confusion Matrix": str(cm),
+            "Confusion Matrix": cm,
         }
 
         return pd.DataFrame([metrics])
@@ -144,205 +105,114 @@ def evaluate_model(
         logging.error(f"An error occurred while evaluating the model: {e}")
         raise
 
+def main(args):
+    run = wandb.init(job_type="train_logistic_regression")
+    run.config.update(args)  # Logs all current config to wandb
 
-def plot_roc_curve(model, X_test, y_test, report_folder):
-    """
-    Plot the ROC curve for the given model and test data.
+    # Load configurations from JSON files
+    with open(args.hyperparameters) as f:
+        hyperparameters = json.load(f)
 
-    Parameters:
-    model (Model): The trained model.
-    X_test (DataFrame): The test features.
-    y_test (Series): The true labels for the test data.
-    report_folder (str): The folder where to save the plot.
-    model (str): The type of the model, used for naming the plot file.
-    """
-    y_pred_proba = model.predict_proba(X_test)[:, 1]
-    fpr, tpr, _ = metrics.roc_curve(y_test, y_pred_proba)
-    auc = metrics.roc_auc_score(y_test, y_pred_proba)
-    plt.figure()
-    plt.plot(fpr, tpr, label=f"AUC={auc:.2f}")
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title(f"ROC Curve for {model}")
-    plt.legend(loc=4)
-
-    # Save the plot to a file
-    plt.savefig(f"{report_folder}{model}_roc_curve.png")
-    plt.close()
-
-
-def save_model(model, filename: str):
-    """
-    Save the trained model to disk.
-
-    Parameters:
-    model (sklearn.base.BaseEstimator): The trained machine learning model.
-    filename (str): The path to the file where the model should be saved.
-    """
     try:
-        dump(model, filename)
-        logging.info(f"Model saved to {filename}")
-    except Exception as e:
-        logging.error(f"An error occurred while saving the model: {e}")
-        raise
+        # Fetching and loading the training data from wandb artifacts
+        X_train_artifact = wandb.use_artifact(args.X_train_artifact).file()
+        X_train = pd.read_csv(X_train_artifact)
 
+        y_train_artifact = wandb.use_artifact(args.y_train_artifact).file()
+        y_train = pd.read_csv(y_train_artifact).squeeze()
 
-def perform_model_building(
-    df: pd.DataFrame,
-    target_column: str,
-    test_size: float,
-    random_state: int,
-    class_weight=None,
-) -> pd.DataFrame:
-    """
-    Perform all model building steps and save the evaluation metrics and baselines to separate CSV files in the predefined folder.
-    """
-    try:
-        logging.info(f"Performing all model building steps.")
+        # Splitting the training data into smaller training and validation sets
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_train, y_train, test_size=args.val_size, random_state=args.random_seed)
 
-        # Predefined folder for saving reports
-        reports_folder = "reports/"
+        # Random undersampling
+        X_train_resampled, y_train_resampled = random_undersampling(X_train, y_train, args.random_seed)
 
-        # File paths for saving the metrics and baselines
-        metrics_report_path = f"{reports_folder}_metrics_report.csv"
-        baseline_report_path = f"{reports_folder}_baseline_report.csv"
-
-        # Split data
-        X_train, X_test, y_train, y_test = split_data(
-            df, target_column, test_size, random_state
+        # Get preprocessing pipeline
+        # Split the numerical_cols if it's a single string
+        if len(args.numerical_cols) == 1 and ' ' in args.numerical_cols[0]:
+            args.numerical_cols = args.numerical_cols[0].split()
+        print(args.numerical_cols)
+        # Split the factorize_cols if it's a single string
+        if len(args.factorize_cols) == 1 and ' ' in args.factorize_cols[0]:
+            args.factorize_cols = args.factorize_cols[0].split()
+        preprocessing_pipeline = get_preprocessing_pipeline(
+            numerical_cols=args.numerical_cols,
+            factorize_cols=args.factorize_cols
         )
-
-        # Perform random undersampling
-        X_train_rus, y_train_rus = random_undersampling(
-            X_train, y_train, random_state)
-
-        # # Perform baselining
-        baseline_metrics = perform_baselining(X_test,y_test)
-        logging.info(f"Baseline Metrics: {baseline_metrics}")
 
         # Train logistic regression model
-        model = train_logistic_regression(X_train_rus, y_train_rus, random_state, class_weight=class_weight)
+        logistic_model = Pipeline(steps=[
+            ('preprocessor', preprocessing_pipeline),
+            ('classifier', train_logistic_regression(X_train_resampled, y_train_resampled, hyperparameters))
+        ])
 
-        # Save the trained model
-        model_filename = f"{reports_folder}Logistic_Regression_model.joblib"
-        save_model(model, model_filename)
+        # Fit the pipeline to the resampled training data
+        logistic_model.fit(X_train_resampled, y_train_resampled)
 
-        # Evaluate the model
-        evaluation_metrics = evaluate_model(model, X_test, y_test)
+        # Evaluate the model on the validation set
+        y_pred = logistic_model.predict(X_val)
+        y_prob = logistic_model.predict_proba(X_val)[:, 1]  # Probability estimates
+        performance_metrics_df = evaluate_model(y_val, y_pred, y_prob)
+        # Extract the confusion matrix from the dataframe
+        cm = performance_metrics_df['Confusion Matrix'].values[0]
 
-        # Plot and save the ROC curve
-        plot_roc_curve(model, X_test, y_test, reports_folder)
+        # Log confusion matrix as an image in wandb
+        wandb.log({"confusion_matrix": wandb.sklearn.plot_confusion_matrix(y_val, y_pred, cm)})
 
-        # Save the evaluation metrics and baselines to separate CSV files
-        evaluation_metrics.to_csv(metrics_report_path, index=False)
-        baseline_metrics.to_csv(baseline_report_path, index=False)
+        # Log the model and metrics to wandb
+        wandb.log({'performance_metrics': performance_metrics_df.to_dict(orient='records')[0]})
 
-        return evaluation_metrics  # , baseline_metrics
-    except Exception as e:
-        logging.error(f"An error occurred during model building: {e}")
-        raise
-
-
-def main(args):
-    """
-    The main entry point of the application that performs data splitting,
-    model training, and evaluation based on the provided command line arguments.
-    """
-    wandb.init(job_type="model_training")
-
-    # Path to the input artifact
-    input_artifact = wandb.use_artifact(args.input_artifact)
-    input_artifact_path = input_artifact.file()
-
-    try:
-        # Load input artifact (cleaned data)
-        df = pd.read_csv(input_artifact_path)
-
-        # Perform model building
-        evaluation_metrics = perform_model_building(
-            df=df,
-            target_column=args.target_column,
-            test_size=args.test_size,
-            random_state=args.random_state,
-            class_weight=args.class_weight,
+        # Infer the signature of the model and save the model
+        signature = infer_signature(X_val, y_pred)
+        model_dir = "logistic_regression_model_dir"
+        if os.path.exists(model_dir):
+            shutil.rmtree(model_dir)
+        mlflow.sklearn.save_model(
+            logistic_model,
+            model_dir,
+            serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE,
+            signature=signature,
+            input_example=X_val.iloc[[0]]
         )
 
-        # Output the evaluation metrics
-        print(evaluation_metrics)
-
-        # Save and log the model as an artifact
-        model_path = "reports/Logistic_Regression_model.joblib"
+        # Log the MLflow model directory as an artifact in wandb
         model_artifact = wandb.Artifact(
-            args.output_artifact_name, 
+            name=args.model_artifact,
             type="model",
-            description="Trained model artifact"
+            description="Trained logistic regression model with feature engineering"
         )
-        model_artifact.add_file(model_path)
-        wandb.log_artifact(model_artifact)
+        model_artifact.add_dir(model_dir)
+        artifact = run.log_artifact(model_artifact)
 
-        # Save and log all files in the reports folder as an artifact
-        reports_artifact = wandb.Artifact(
-            "evaluation_metrics", 
-            type="metrics",
-            description="Evaluation metrics of the model"
-        )
-        reports_artifact.add_dir("reports/")
-        wandb.log_artifact(reports_artifact)
+        # Tagging the artifact version as 'prod'
+        artifact.wait()
+        api = wandb.Api()
+        logged_artifact = api.artifact(
+            f"{run.entity}/{run.project}/{args.model_artifact}:latest")
+        if 'prod' not in logged_artifact.aliases:
+            logged_artifact.aliases.append('prod')
+            logged_artifact.save()
+
+        logger.info("Model training and evaluation completed.")
 
     except Exception as e:
-        logging.error(f"An error occurred in the main function: {e}")
+        logger.error(f"Error in model training or evaluation: {e}")
         raise
-
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Machine Learning Model Building and Evaluation")
-    
-    parser.add_argument(
-        "--input_artifact",
-        type=str,
-        required=True,
-        help="Name for the input artifact"
-    )
-    parser.add_argument(
-        "--target_column",
-        type=str,
-        required=True,
-        help="Name of the target column"
-    )
-    parser.add_argument(
-        "--test_size",
-        type=float,
-        default=0.2,
-        help="Size of the test set."
-    )
-    parser.add_argument(
-        "--random_state",
-        type=int,
-        default=42,
-        help="The random state for reproducibility."
-    )
-    parser.add_argument(
-        "--class_weight",
-        default=None,
-        help="Class weights for imbalanced datasets."
-    )
-    parser.add_argument(
-        "--output_artifact_name",
-        type=str,
-        required=True,
-        help="Name for the output artifact"
-    )
-    parser.add_argument(
-        "--output_artifact_type",
-        type=str,
-        required=True,
-        help="Type of the output artifact"
-    )
-    parser.add_argument(
-        "--output_artifact_description",
-        type=str,
-        help="Description for the output artifact"
-    )
-    
+    parser = argparse.ArgumentParser(description="Train and evaluate a logistic regression model")
+
+    parser.add_argument("--X_train_artifact", type=str, required=True, help="W&B artifact name for X_train data")
+    parser.add_argument("--y_train_artifact", type=str, required=True, help="W&B artifact name for y_train data")
+    parser.add_argument("--val_size", type=float, required=True, help="Size for the validation set split")
+    parser.add_argument("--numerical_cols", nargs='+', required=True,help="List of column names to be treated as numerical features")
+    parser.add_argument("--factorize_cols", nargs='+', required=True,help="List of column names to factorize")
+    parser.add_argument("--hyperparameters", type=str, required=True, help="JSON file with hyperparameters for the logistic regression model")
+    parser.add_argument("--model_artifact", type=str, required=True, help="Name of the model to log to W&B")
+    parser.add_argument("--random_seed", type=int, default=42, help="Random seed for data splitting and undersampling")
+
     args = parser.parse_args()
     main(args)
+
+
