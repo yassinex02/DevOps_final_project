@@ -36,18 +36,18 @@ split_data:
   random_state: 42
 
 model_building:
-    X_train_artifact: X_train_data
-    y_train_artifact: y_train_data
-    val_size: 0.2
-    numerical_cols: "['age', 'employ', 'address', 'income', 'debtinc', 'creddebt', 'othdebt']"
-    factorize_cols: '['ed']'
-    hyperparameters: 
-        C: 0.1
-        solver: lbfgs
-        class_weight: balanced
-    model_artifact: logistic_regression
-    random_seed: 44
-          
+  X_train_artifact: X_train_data
+  y_train_artifact: y_train_data
+  val_size: 0.2
+  numerical_cols: ['age', 'employ', 'address', 'income', 'debtinc', 'creddebt', 'othdebt']
+  factorize_cols: ['ed']
+  hyperparameters:
+    C: 0.1
+    solver: lbfgs
+    class_weight: balanced
+  model_artifact: logistic_regression
+  random_seed: 44
+        
 logging:
   format: "%(asctime)s [%(levelname)s] %(message)s"
   level: INFO
