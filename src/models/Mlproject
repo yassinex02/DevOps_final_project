@@ -17,11 +17,11 @@ entry_points:
             description: Size for the validation set split
             required: true
         numerical_cols:
-            type: string
+            type: json.loads
             description: List of numerical column names
             required: true
         factorize_cols:
-            type: string
+            type: json.loads
             description: List of columns to apply FactorizeTransformer
             required: true
         hyperparameters:
