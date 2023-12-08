@@ -122,11 +122,11 @@ def main(config: DictConfig):
         # Run the model building step
         try:
             _ = mlflow.run(
-                os.path.join(root_path, "src", "model_building"),
+                os.path.join(root_path, "src", "models"),
                 "main",
                 parameters={
-                    "X_train_artifact": config['split_data']['X_train_artifact'] + ":latest",
-                    "y_train_artifact": config['split_data']['y_train_artifact'] + ":latest",
+                    "X_train_artifact": config["model_building"]['X_train_artifact'] + ":latest",
+                    "y_train_artifact": config["model_building"]['y_train_artifact'] + ":latest",
                     "val_size": config["model_building"]["val_size"],
                     "numerical_cols": " ".join(config["model_building"]["numerical_cols"]),
                     "factorize_cols": " ".join(config["model_building"]["factorize_cols"]),
@@ -141,3 +141,6 @@ def main(config: DictConfig):
 
 if __name__ == "__main__":
     main()
+
+
+
