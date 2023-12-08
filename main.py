@@ -117,7 +117,7 @@ def main(config: DictConfig):
             json.dump(omegaconf.OmegaConf.to_container(
             config["model_building"]["hyperparameters"]), hyperparam_file)
 
-            hyperparam_file_path = hyperparam_file.name\
+            hyperparam_file_path = hyperparam_file.name
 
         # Run the model building step
         try:

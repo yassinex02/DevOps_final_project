@@ -35,7 +35,7 @@ split_data:
   test_size: 0.2
   random_state: 42
 
-train_model:
+model_building:
     X_train_artifact: X_train_data
     y_train_artifact: y_train_data
     val_size: 0.2
