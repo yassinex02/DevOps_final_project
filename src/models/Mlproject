@@ -4,43 +4,45 @@ conda_env: conda.yaml
 entry_points:
   main:
     parameters:
-        X_train_artifact:
-            type: string
-            description: W&B artifact name for X_train data
-            required: true
-        y_train_artifact:
-            type: string
-            description: W&B artifact name for y_train data
-            required: true
-        val_size:
-            type: float
-            description: Size for the validation set split
-            required: true
-        numerical_cols:
-            type: json.loads
-            description: List of numerical column names
-            required: true
-        factorize_cols:
-            type: json.loads
-            description: List of columns to apply FactorizeTransformer
-            required: true
-        hyperparameters:
-            type: string
-            description: JSON file with hyperparameters for the logistic regression model
-            required: true
-        model_artifact:
-            type: string
-            description: Name of the model to log to W&B
-            default: "logistic_regression"
-        random_seed:
-            type: int
-            description: Random seed for data splitting and undersampling
-            default: 42
-     command: "python train_model.py --X_train_artifact {X_train_artifact} \
-                                        --y_train_artifact {y_train_artifact} \ 
-                                        --val_size {val_size} \
-                                        --numerical_cols {numerical_cols} \
-                                        --factorize_cols {factorize_cols} \
-                                        --hyperparameters {hyperparameters} \
-                                        --model_artifact {model_artifact} \
-                                        --random_seed {random_seed}"
+      X_train_artifact:
+        type: string
+        description: W&B artifact name for X_train data
+        required: true
+      y_train_artifact:
+        type: string
+        description: W&B artifact name for y_train data
+        required: true
+      val_size:
+        type: float
+        description: Size for the validation set split
+        required: true
+      numerical_cols:
+        type: str
+        description: List of numerical column names
+        required: true
+      factorize_cols:
+        type: str
+        description: List of columns to apply FactorizeTransformer
+        required: true
+      hyperparameters:
+        type: string
+        description: JSON file with hyperparameters for the logistic regression model
+        required: true
+      model_artifact:
+        type: string
+        description: Name of the model to log to W&B
+        default: "logistic_regression"
+      random_seed:
+        type: int
+        description: Random seed for data splitting and undersampling
+        default: 42
+    command: |
+      python train_model.py \
+      --X_train_artifact {X_train_artifact} \
+      --y_train_artifact {y_train_artifact} \
+      --val_size {val_size} \
+      --numerical_cols {numerical_cols} \
+      --factorize_cols {factorize_cols} \
+      --hyperparameters {hyperparameters} \
+      --model_artifact {model_artifact} \
+      --random_seed {random_seed}

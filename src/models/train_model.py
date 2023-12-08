@@ -129,6 +129,13 @@ def main(args):
         X_train_resampled, y_train_resampled = random_undersampling(X_train, y_train, args.random_seed)
 
         # Get preprocessing pipeline
+        # Split the numerical_cols if it's a single string
+        if len(args.numerical_cols) == 1 and ' ' in args.numerical_cols[0]:
+            args.numerical_cols = args.numerical_cols[0].split()
+        print(args.numerical_cols)
+        # Split the factorize_cols if it's a single string
+        if len(args.factorize_cols) == 1 and ' ' in args.factorize_cols[0]:
+            args.factorize_cols = args.factorize_cols[0].split()
         preprocessing_pipeline = get_preprocessing_pipeline(
             numerical_cols=args.numerical_cols,
             factorize_cols=args.factorize_cols
@@ -199,7 +206,7 @@ if __name__ == "__main__":
     parser.add_argument("--X_train_artifact", type=str, required=True, help="W&B artifact name for X_train data")
     parser.add_argument("--y_train_artifact", type=str, required=True, help="W&B artifact name for y_train data")
     parser.add_argument("--val_size", type=float, required=True, help="Size for the validation set split")
-    parser.add_argument("--numerical_cols", type='+', required=True,help="List of column names to be treated as numerical features")
+    parser.add_argument("--numerical_cols", nargs='+', required=True,help="List of column names to be treated as numerical features")
     parser.add_argument("--factorize_cols", nargs='+', required=True,help="List of column names to factorize")
     parser.add_argument("--hyperparameters", type=str, required=True, help="JSON file with hyperparameters for the logistic regression model")
     parser.add_argument("--model_artifact", type=str, required=True, help="Name of the model to log to W&B")
@@ -207,3 +214,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
+
+
