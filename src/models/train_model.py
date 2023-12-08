@@ -97,7 +97,7 @@ def evaluate_model(
             "PPV": ppv,
             "NPV": npv,
             "ROC AUC": roc_auc_score(y_test, y_prob),
-            "Confusion Matrix": str(cm),
+            "Confusion Matrix": cm,
         }
 
         return pd.DataFrame([metrics])
@@ -147,6 +147,11 @@ def main(args):
         y_pred = logistic_model.predict(X_val)
         y_prob = logistic_model.predict_proba(X_val)[:, 1]  # Probability estimates
         performance_metrics_df = evaluate_model(y_val, y_pred, y_prob)
+        # Extract the confusion matrix from the dataframe
+        cm = performance_metrics_df['Confusion Matrix'].values[0]
+
+        # Log confusion matrix as an image in wandb
+        wandb.log({"confusion_matrix": wandb.sklearn.plot_confusion_matrix(y_val, y_pred, cm)})
 
         # Log the model and metrics to wandb
         wandb.log({'performance_metrics': performance_metrics_df.to_dict(orient='records')[0]})
@@ -161,7 +166,7 @@ def main(args):
             model_dir,
             serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE,
             signature=signature,
-            input_example=X_val.iloc[0]
+            input_example=X_val.iloc[[0]]
         )
 
         # Log the MLflow model directory as an artifact in wandb
@@ -202,4 +207,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
-
