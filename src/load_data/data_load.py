@@ -54,6 +54,7 @@ def load_data(file_path: str, sheet_name: str = None) -> pd.DataFrame:
         logging.error(f"An error occurred while loading the data: {e}")
         raise
 
+
 def main(args):
     """
     Load data from a file and log it to Weights & Biases.
@@ -65,9 +66,12 @@ def main(args):
 
     df = load_data(args.file_path, args.sheet_name)
 
+    # Set a default value for the artifact type
+    artifact_type = args.artifact_type or "dataset"
+
     artifact = wandb.Artifact(
         args.artifact_name,
-        type=args.artifact_type,
+        type=artifact_type,  # Set the type attribute
         description=args.artifact_description
     )
     with artifact.new_file("raw_data.csv", mode="w") as f:
@@ -109,4 +113,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
-
