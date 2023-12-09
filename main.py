@@ -93,6 +93,29 @@ def main(config: DictConfig):
                 logger.error("MLflow project failed: %s", e)
                 raise
     
+
+
+    if "data_check" in active_steps:
+            # Run the Data Quality Checks step
+            try:
+                _ = mlflow.run(
+                    os.path.join(root_path, "src", "data_check"),
+                    "main",
+                    parameters={
+                        "csv": f"{config['data_cleaning']['output_artifact_name']}:latest",
+                        "ref_data": config['data_check']['ref_data'],
+                        "ks_alpha": config['data_check']['ks_alpha'],
+                        "column_presence_and_type": config['data_check']['column_presence_and_type'],
+                        "known_classes": config['data_check']['known_classes'],
+                        "missing_values": config['data_check']['missing_values'],
+                        "ranges": config['data_check']['ranges']
+                    }
+                )
+            except Exception as e:
+                logger.error("Data Quality Checks MLflow project failed: %s", e)
+                raise
+
+
     if "data_split" in active_steps:
         # Run the data split step
         try:
@@ -100,7 +123,7 @@ def main(config: DictConfig):
                 os.path.join(root_path, "src", "data_split"),
                 "main",
                 parameters={
-                    "input": config['preprocess_data']['output_artifact_name'] + ":latest",
+                    "input_artifact": config['preprocess_data']['output_artifact_name'] + ":latest",
                     "target_column": config["split_data"]["target_column"],
                     "test_size": config["split_data"]["test_size"],
                     "random_state": config["split_data"]["random_state"],
@@ -122,11 +145,11 @@ def main(config: DictConfig):
         # Run the model building step
         try:
             _ = mlflow.run(
-                os.path.join(root_path, "src", "models"),
+                os.path.join(root_path, "src", "model_building"),
                 "main",
                 parameters={
-                    "X_train_artifact": config["model_building"]['X_train_artifact'] + ":latest",
-                    "y_train_artifact": config["model_building"]['y_train_artifact'] + ":latest",
+                    "X_train_artifact": config['split_data']['X_train_artifact'] + ":latest",
+                    "y_train_artifact": config['split_data']['y_train_artifact'] + ":latest",
                     "val_size": config["model_building"]["val_size"],
                     "numerical_cols": " ".join(config["model_building"]["numerical_cols"]),
                     "factorize_cols": " ".join(config["model_building"]["factorize_cols"]),
@@ -141,6 +164,3 @@ def main(config: DictConfig):
 
 if __name__ == "__main__":
     main()
-
-
-
