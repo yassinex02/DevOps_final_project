@@ -26,7 +26,7 @@ def pytest_addoption(parser):
 @pytest.fixture(scope='session')
 def data(request):
     run = wandb.init(job_type="data_tests", resume=True)
-    artifact_name = request.config.getoption("--csv")
+    artifact_name = request.config.getoption("--csv") 
     artifact = run.use_artifact(artifact_name)
     data_path = artifact.file()
     df = pd.read_csv(data_path)

@@ -1,7 +1,7 @@
 main:
   project_name: Loan_Default_Prediction
   experiment_name: trial
-  steps: loader,exploration,preprocessing,data_split,model_building
+  steps: loader,exploration,preprocessing,data_check,data_split,model_building
 
 data_load:
   file_path: /workspaces/DevOps_final_project/data/raw/bankloan.csv
@@ -29,6 +29,33 @@ preprocess_data:
   output_artifact_type: processed_data
   output_artifact_description: "Processed Bankloan Data"
 
+data_check:
+  ref_artifact: raw_bankloan_data:latest
+  ks_alpha: 0.05
+  column_presence_and_type: 
+    age: int64
+    ed: int64
+    employ: int64
+    address: int64
+    income: float64
+    debtinc: float64
+    creddebt: float64
+    othdebt: float64
+    default: int64
+  known_classes: [1,2,3,4,5]
+  missing_values: True
+  ranges:
+    age: [20,58]
+    ed: [1,5]
+    employ: [0,38]
+    address: [0,37]
+    income: [12.1,2461.7]
+    debtinc: [0.08,44.62]
+    creddebt: [0.005292,139.58060553]
+    othdebt: [0.00937296,416.51742447]
+    default: [0,1]
+  ref_data: 
+ 
 split_data:
   # input_artifact: processed_bankloan_data:latest
   target_column: default
@@ -51,30 +78,4 @@ model_building:
 logging:
   format: "%(asctime)s [%(levelname)s] %(message)s"
   level: INFO
-
-#   output_file: output_profile_report.html
-
-
-
-# profile_report:
-#   title: Profiling Report
-
-# expected_columns:
-#   - age
-#   - ed
-#   - employ
-#   - address
-#   - income
-#   - debtinc
-#   - creddebt
-#   - othdebt
-#   - default
-
-# factorize_columns:
-#   - ed
-
-# standardize_columns:
-#   - income
-#   - debtinc
-#   - creddebt
-#   - othdebt
+   
