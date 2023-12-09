@@ -103,7 +103,7 @@ def main(config: DictConfig):
                     os.path.join(root_path, "src", "data_check"),
                     "main",
                     parameters={
-                        "csv": f"{config['data_cleaning']['output_artifact_name']}:latest",
+                        "csv": f"{config['preprocess_data']['output_artifact_name']}:latest",
                         "ref_data": config['data_check']['ref_data'],
                         "ks_alpha": config['data_check']['ks_alpha'],
                         "column_presence_and_type": config['data_check']['column_presence_and_type'],
