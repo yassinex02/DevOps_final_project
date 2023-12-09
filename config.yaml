@@ -1,7 +1,7 @@
 main:
   project_name: Loan_Default_Prediction
   experiment_name: trial
-  steps: loader,exploration,preprocessing,data_check,data_split,model_building
+  steps: loader,exploration,preprocessing,data_check,data_split,model_building, model_testing
 
 data_load:
   file_path: /workspaces/DevOps_final_project/data/raw/bankloan.csv
@@ -75,8 +75,14 @@ model_building:
     class_weight: balanced
   model_artifact: logistic_regression
   random_seed: 44
-        
+
+
+model_testing:
+  X_test_artifact: X_test_data
+  y_test_artifact: y_test_data
+
+
+
 logging:
   format: "%(asctime)s [%(levelname)s] %(message)s"
   level: INFO
-   

@@ -18,8 +18,8 @@ _steps = [
     'data_check'
     'data_split',
     'model_building',
+    'model_testing',
 ]
-
 
 @hydra.main(config_name="config")
 def main(config: DictConfig):
@@ -125,7 +125,7 @@ def main(config: DictConfig):
                 os.path.join(root_path, "src", "data_split"),
                 "main",
                 parameters={
-                    "input_artifact": config['preprocess_data']['output_artifact_name'] + ":latest",
+                    "input": config['preprocess_data']['output_artifact_name'] + ":latest",
                     "target_column": config["split_data"]["target_column"],
                     "test_size": config["split_data"]["test_size"],
                     "random_state": config["split_data"]["random_state"],
@@ -163,6 +163,23 @@ def main(config: DictConfig):
         except Exception as e:
                 logger.error("MLflow project failed: %s", e)
                 raise
+        
+
+    if "model_testing" in active_steps:
+        # Run the Model Testing step
+        try:
+            _ = mlflow.run(
+                os.path.join(root_path, "src", "model_test"),
+                "main",
+                parameters={
+                    "model_artifact": f"{config['model_building']['model_artifact']}:prod",
+                    "X_test_artifact": f"{config['model_testing']['X_test_artifact']}:latest",
+                    "y_test_artifact": f"{config['model testing']['y_test_artifact']}:latest",
+                }
+            )
+        except Exception as e:
+            logger.error("Model Testing MLflow project failed: %s", e)
+            raise
 
 if __name__ == "__main__":
     main()
