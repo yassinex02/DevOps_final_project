@@ -14,7 +14,10 @@ entry_points:
       ks_alpha:
         description: Alpha value for the Kolmogorov-Smirnov test
         type: float
-      column_presence_and_type:
+      numerical_columns:
+        description: List of numerical columns
+        type: string
+      required_columns:
         description: Column names and types required in the data
         type: string 
       known_classes:
@@ -31,11 +34,9 @@ entry_points:
       --csv {csv}
       --ref_data {ref_data}
       --ks_alpha {ks_alpha}
-      --column_presence_and_type {column_presence_and_type}
+      --numerical_columns {numerical_columns}
+      --required_columns {required_columns}
       --known_classes {known_classes}
       --missing_values {missing_values}
       --ranges {ranges}
-
-      
-
       

@@ -106,7 +106,8 @@ def main(config: DictConfig):
                         "csv": f"{config['preprocess_data']['output_artifact_name']}:latest",
                         "ref_data": config['data_check']['ref_data'],
                         "ks_alpha": config['data_check']['ks_alpha'],
-                        "column_presence_and_type": config['data_check']['column_presence_and_type'],
+                        "numerical_columns": ",".join(config['data_check']['numerical_columns']),
+                        "required_columns": config['data_check']['required_columns'],
                         "known_classes": config['data_check']['known_classes'],
                         "missing_values": config['data_check']['missing_values'],
                         "ranges": config['data_check']['ranges']
@@ -165,3 +166,4 @@ def main(config: DictConfig):
 
 if __name__ == "__main__":
     main()
+

@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 # Non-Deterministic Test
 def test_kolmogorov_smirnov(ref_data, data, ks_alpha, numerical_columns):
     """Test that the distribution of the numerical columns in the data is the same as in the reference data."""
-
     # Bonferroni correction for multiple hypothesis testing
     alpha_prime = 1 - (1 - ks_alpha)**(1 / len(numerical_columns))
 
@@ -33,11 +32,12 @@ def test_column_presence_and_type(data, required_columns):
     logger.info("Testing that the data has the required columns and that they are of the required type.")
 
     # Function to map string to pandas data type check function
+
     def map_type_check_function(type_str):
         if type_str == "int64":
-            return pd.api.types.is_int64_dtype
+            return pd.api.types.is_integer_dtype
         elif type_str == "float64":
-            return pd.api.types.is_float64_dtype
+            return pd.api.types.is_float_dtype
         elif type_str == "object":
             return pd.api.types.is_object_dtype
         else:
@@ -59,7 +59,7 @@ def test_class_names(data, known_classes):
 
     logger.info("Testing that the data has the required classes.")
    
-    assert data["default"].isin(known_classes).all()
+    assert data["ed"].isin(known_classes).all()
 
 def test_missing_values(data):
     """Test that the data has no missing values."""
@@ -77,8 +77,9 @@ def test_column_ranges(data, ranges):
 
     for col_name, (minimum, maximum) in converted_ranges.items():
         assert data[col_name].dropna().between(minimum, maximum).all(), (
-            f"Column {col_name} failed the test. Should be between {minimum} and {maximum}, " 
+            f"Column {col_name} failed the test. Should be between {minimum} and {maximum}, "
             f"instead min={data[col_name].min()} and max={data[col_name].max()}"
         )
-       
+
+
 

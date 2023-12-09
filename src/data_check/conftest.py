@@ -3,6 +3,7 @@ import pytest
 import pandas as pd
 import wandb
 import shutil
+import ast
 from pathlib import Path
 
 def pytest_addoption(parser):
@@ -12,8 +13,10 @@ def pytest_addoption(parser):
                      help="File path for the reference data CSV file")
     parser.addoption("--ks_alpha", action="store", type=float, default=0.05, required=True,
                      help="Alpha value for the Kolmogorov-Smirnov test")
-    parser.addoption("--column_presence_and_type", action="store", nargs="+", required=True,
-                        help="Column names and types required in the data")
+    parser.addoption("--numerical_columns", action="store", required=True,
+                    help="Numerical columns for the Kolmogorov-Smirnov test")
+    parser.addoption("--required_columns", action="store", required=True,
+                    help="Column names and types required in the data")
     parser.addoption("--known_classes", action="store", nargs="+", required=True,
                         help="Known classes for the target column")
     parser.addoption("--missing_values", action="store", required=True,
@@ -55,17 +58,31 @@ def ks_alpha(request):
 
 
 @pytest.fixture(scope='session')
-def required_columns(request):
-    required_columns=request.config.getoption("--column_presence_and_type")
-    if not required_columns:
-        pytest.fail("No --column_presence_and_type provided")
+def numerical_columns(request):
+    numerical_columns=request.config.getoption("--numerical_columns")
+    # # Ensure numerical_columns is a list
+    # if not isinstance(numerical_columns, list):
+    #     numerical_columns = [numerical_columns]
+    # numerical_columns = [word for strings in numerical_columns for word in strings.split()]
+    # print(numerical_columns)
+    if not numerical_columns:
+        pytest.fail("No --numerical_columns provided")
+    return numerical_columns.split(',')
 
+
+@pytest.fixture(scope='session')
+def required_columns(request):
+    required_columns=request.config.getoption("--required_columns")
+    if not required_columns:
+        pytest.fail("No --required_columns provided")
+    return ast.literal_eval(required_columns)
 
 @pytest.fixture(scope='session')
 def known_classes(request):
     known_classes=request.config.getoption("--known_classes")
     if not known_classes:
         pytest.fail("No --known_classes provided")
+    return ast.literal_eval(known_classes[0])
 
 
 @pytest.fixture(scope='session')
@@ -73,9 +90,11 @@ def missing_values(request):
     missing_values=request.config.getoption("--missing_values")
 
 
-
 @pytest.fixture(scope='session')
 def ranges(request):
     ranges=request.config.getoption("--ranges")
+    ranges_str = ranges[0]
+    print(ranges)
     if not ranges:
         pytest.fail("No --ranges provided")
+    return ast.literal_eval(ranges_str)

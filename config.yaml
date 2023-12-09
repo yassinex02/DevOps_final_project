@@ -32,7 +32,8 @@ preprocess_data:
 data_check:
   ref_artifact: raw_bankloan_data:latest
   ks_alpha: 0.05
-  column_presence_and_type: 
+  numerical_columns: ['employ', 'address', 'income', 'debtinc', 'creddebt', 'othdebt']
+  required_columns: 
     age: int64
     ed: int64
     employ: int64
@@ -54,7 +55,7 @@ data_check:
     creddebt: [0.005292,139.58060553]
     othdebt: [0.00937296,416.51742447]
     default: [0,1]
-  ref_data: 
+  ref_data: /workspaces/DevOps_final_project/data/ref/ref_bankloan.csv
  
 split_data:
   # input_artifact: processed_bankloan_data:latest
