@@ -15,6 +15,7 @@ _steps = [
     'loader',
     'exploration',
     'preprocessing',
+    'data_check'
     'data_split',
     'model_building',
 ]
