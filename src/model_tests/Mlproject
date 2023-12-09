@@ -1,0 +1,25 @@
+name: model_testing
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      model_artifact:
+        description: The MLflow model artifact to test
+        type: str
+        required: true
+
+      X_test_artifact:
+        description: The wandb artifact containing the test features
+        type: str
+        required: true
+
+      y_test_artifact:
+        description: The wandb artifact containing the test labels
+        type: str
+        required: true
+
+    command: >-
+      python model_testing.py --model_artifact {model_artifact} \
+                              --X_test_artifact {X_test_artifact} \
+                              --y_test_artifact {y_test_artifact}
