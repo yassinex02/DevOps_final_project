@@ -43,13 +43,15 @@ def test_column_presence_and_type(data, required_columns):
         else:
             raise ValueError(f"Unsupported data type: {type_str}")
 
+    # Convert the required_columns with string data types to pandas data type check functions
+    converted_required_columns = {col: map_type_check_function(dtype_str) for col, dtype_str in required_columns.items()}
+
     # Check column presence
-    assert set(data.columns.values).issuperset(set(required_columns.keys())), "Some required columns are missing."
+    assert set(data.columns.values).issuperset(set(converted_required_columns.keys())), "Some required columns are missing."
 
     # Check column data types
-    for col_name, dtype_str in required_columns.items():
-        type_check_function = map_type_check_function(dtype_str)
-        assert type_check_function(data[col_name]), f"Column {col_name} is not of type {dtype_str}"
+    for col_name, type_check_function in converted_required_columns.items():
+        assert type_check_function(data[col_name]), f"Column {col_name} is not of type {required_columns[col_name]}"
 
 # Deterministic Test
 def test_class_names(data, known_classes):
@@ -59,15 +61,24 @@ def test_class_names(data, known_classes):
    
     assert data["default"].isin(known_classes).all()
 
+def test_missing_values(data):
+    """Test that the data has no missing values."""
+    logger.info("Testing for missing values...")
+    assert not data.isnull().values.any(), "There are missing values in the data."
+
 # Deterministic Test
 def test_column_ranges(data, ranges):
     """Test that the data has the required ranges."""
 
     logger.info("Testing that the data has the required ranges.")
-   
+    
+    # Convert ranges from list format to tuple format
+    converted_ranges = {col: tuple(range_vals) for col, range_vals in ranges.items()}
 
-    for col_name, (minimum, maximum) in ranges.items():
+    for col_name, (minimum, maximum) in converted_ranges.items():
         assert data[col_name].dropna().between(minimum, maximum).all(), (
             f"Column {col_name} failed the test. Should be between {minimum} and {maximum}, "
             f"instead min={data[col_name].min()} and max={data[col_name].max()}"
         )
+       
+
