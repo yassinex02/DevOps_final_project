@@ -5,6 +5,7 @@ import os
 import shutil
 from typing import Tuple
 import mlflow
+import matplotlib.pyplot as plt
 import pandas as pd
 import wandb
 import numpy as np
@@ -13,12 +14,14 @@ from mlflow.models import infer_signature
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
+    auc,
     accuracy_score,
     f1_score,
     precision_score,
     recall_score,
     roc_auc_score,
     confusion_matrix,
+    roc_curve
 )
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
@@ -105,6 +108,33 @@ def evaluate_model(
         logging.error(f"An error occurred while evaluating the model: {e}")
         raise
 
+def plot_and_log_roc_curve(y_true: pd.Series, y_prob: np.ndarray):
+    """
+    Plot the ROC curve, log it to wandb, and delete the image locally.
+    """
+    fpr, tpr, _ = roc_curve(y_true, y_prob)
+    roc_auc = auc(fpr, tpr)
+
+    plt.figure()
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic')
+    plt.legend(loc="lower right")
+
+    roc_curve_filename = "roc_curve.png"
+    plt.savefig(roc_curve_filename)
+    plt.close()
+
+    wandb.log({"roc_curve": wandb.Image(roc_curve_filename)})
+
+    # Delete the local image file after logging
+    os.remove(roc_curve_filename)
+
+
 def main(args):
     run = wandb.init(job_type="train_logistic_regression")
     run.config.update(args)  # Logs all current config to wandb
@@ -154,12 +184,18 @@ def main(args):
         y_pred = logistic_model.predict(X_val)
         y_prob = logistic_model.predict_proba(X_val)[:, 1]  # Probability estimates
         performance_metrics_df = evaluate_model(y_val, y_pred, y_prob)
+
         # Extract the confusion matrix from the dataframe
         cm = performance_metrics_df['Confusion Matrix'].values[0]
 
         # Log confusion matrix as an image in wandb
         wandb.log({"confusion_matrix": wandb.sklearn.plot_confusion_matrix(y_val, y_pred, cm)})
 
+        # Plot and log ROC curve, then delete the image file
+        plot_and_log_roc_curve(y_val, y_prob)
+
+        logger.info(f"Performance metrics: {performance_metrics_df}")
+       
         # Log the model and metrics to wandb
         wandb.log({'performance_metrics': performance_metrics_df.to_dict(orient='records')[0]})
 
