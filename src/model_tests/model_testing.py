@@ -18,6 +18,8 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
+from transformer import FactorizeTransformer
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 logger = logging.getLogger()
 
@@ -77,10 +79,10 @@ def main(args):
     # Downloading the model
     model_local_path = run.use_artifact(args.model_artifact).download()
 
-    X_test_artifact = wandb.use_artifact(args.X_train_artifact).file()
+    X_test_artifact = wandb.use_artifact(args.X_test_artifact).file()
     X_test = pd.read_csv(X_test_artifact)
 
-    y_test_artifact = wandb.use_artifact(args.y_train_artifact).file()
+    y_test_artifact = wandb.use_artifact(args.y_test_artifact).file()
     y_test = pd.read_csv(y_test_artifact)
 
     try:
@@ -105,7 +107,7 @@ def main(args):
         logger.info(f"Performance metrics: {metrics}")
  
         # Logging metrics to wandb
-        wandb.log(metrics)
+        wandb.log(metrics.to_dict(orient='records')[0])
 
     except Exception as e:
         logger.error(f"Error in model testing: {e}")

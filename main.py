@@ -18,8 +18,9 @@ _steps = [
     'data_check'
     'data_split',
     'model_building',
-    'model_testing',
+    'model_testing'
 ]
+
 
 @hydra.main(config_name="config")
 def main(config: DictConfig):
@@ -135,46 +136,46 @@ def main(config: DictConfig):
                 logger.error("MLflow project failed: %s", e)
                 raise
 
-    if "model_building" in active_steps: 
-        # Create a temporary file to store the hyperparameters
-        with tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.json') as hyperparam_file:
+        if "model_building" in active_steps: 
+            # Create a temporary file to store the hyperparameters
+            with tempfile.NamedTemporaryFile(delete=False, mode='w+', suffix='.json') as hyperparam_file:
 
-            json.dump(omegaconf.OmegaConf.to_container(
-            config["model_building"]["hyperparameters"]), hyperparam_file)
+                json.dump(omegaconf.OmegaConf.to_container(
+                config["model_building"]["hyperparameters"]), hyperparam_file)
 
-            hyperparam_file_path = hyperparam_file.name
+                hyperparam_file_path = hyperparam_file.name
 
-        # Run the model building step
-        try:
-            _ = mlflow.run(
-                os.path.join(root_path, "src", "model_building"),
-                "main",
-                parameters={
-                    "X_train_artifact": config['split_data']['X_train_artifact'] + ":latest",
-                    "y_train_artifact": config['split_data']['y_train_artifact'] + ":latest",
-                    "val_size": config["model_building"]["val_size"],
-                    "numerical_cols": " ".join(config["model_building"]["numerical_cols"]),
-                    "factorize_cols": " ".join(config["model_building"]["factorize_cols"]),
-                    "hyperparameters": hyperparam_file_path,
-                    "model_artifact": config["model_building"]["model_artifact"],
-                    "random_seed": config["model_building"]["random_seed"],
-                },
-            )
-        except Exception as e:
-                logger.error("MLflow project failed: %s", e)
-                raise
+            # Run the model building step
+            try:
+                _ = mlflow.run(
+                    os.path.join(root_path, "src", "models"),
+                    "main",
+                    parameters={
+                        "X_train_artifact": config["model_building"]['X_train_artifact'] + ":latest",
+                        "y_train_artifact": config["model_building"]['y_train_artifact'] + ":latest",
+                        "val_size": config["model_building"]["val_size"],
+                        "numerical_cols": " ".join(config["model_building"]["numerical_cols"]),
+                        "factorize_cols": " ".join(config["model_building"]["factorize_cols"]),
+                        "hyperparameters": hyperparam_file_path,
+                        "model_artifact": config["model_building"]["model_artifact"],
+                        "random_seed": config["model_building"]["random_seed"],
+                    },
+                )
+            except Exception as e:
+                    logger.error("MLflow project failed: %s", e)
+                    raise
         
 
     if "model_testing" in active_steps:
         # Run the Model Testing step
         try:
             _ = mlflow.run(
-                os.path.join(root_path, "src", "model_test"),
+                os.path.join(root_path, "src", "model_tests"),
                 "main",
                 parameters={
                     "model_artifact": f"{config['model_building']['model_artifact']}:prod",
-                    "X_test_artifact": f"{config['model_testing']['X_test_artifact']}:latest",
-                    "y_test_artifact": f"{config['model testing']['y_test_artifact']}:latest",
+                    "X_test_artifact": config["model_testing"]['X_test_artifact'] + ":latest",
+                    "y_test_artifact": config["model_testing"]['y_test_artifact'] + ":latest",
                 }
             )
         except Exception as e:
@@ -183,4 +184,3 @@ def main(config: DictConfig):
 
 if __name__ == "__main__":
     main()
-
