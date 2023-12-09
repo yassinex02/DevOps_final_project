@@ -76,15 +76,15 @@ def train_logistic_regression(
     return model
 
 def evaluate_model(
-     y_test: pd.Series, y_pred: pd.DataFrame, y_prob: pd.DataFrame
+     y_test: pd.Series, y_pred: pd.DataFrame, 
 ) -> pd.DataFrame:
     """
     Evaluate the model using various metrics including 'Specificity', 'PPV', and 'NPV'.
     """
     try:
         logging.info("Evaluating the model.")
-        cm = confusion_matrix(y_test, y_pred)
 
+        cm = confusion_matrix(y_test, y_pred)
         # Calculating specificity, PPV and NPV
         tn, fp, fn, tp = np.array(cm).ravel()
         specificity = tn / (tn + fp)
@@ -99,8 +99,7 @@ def evaluate_model(
             "F1 Score": f1_score(y_test, y_pred),
             "PPV": ppv,
             "NPV": npv,
-            "ROC AUC": roc_auc_score(y_test, y_prob),
-            "Confusion Matrix": cm,
+            "ROC AUC": roc_auc_score(y_test, y_pred),
         }
 
         return pd.DataFrame([metrics])
@@ -108,31 +107,6 @@ def evaluate_model(
         logging.error(f"An error occurred while evaluating the model: {e}")
         raise
 
-def plot_and_log_roc_curve(y_true: pd.Series, y_prob: np.ndarray):
-    """
-    Plot the ROC curve, log it to wandb, and delete the image locally.
-    """
-    fpr, tpr, _ = roc_curve(y_true, y_prob)
-    roc_auc = auc(fpr, tpr)
-
-    plt.figure()
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic')
-    plt.legend(loc="lower right")
-
-    roc_curve_filename = "roc_curve.png"
-    plt.savefig(roc_curve_filename)
-    plt.close()
-
-    wandb.log({"roc_curve": wandb.Image(roc_curve_filename)})
-
-    # Delete the local image file after logging
-    os.remove(roc_curve_filename)
 
 
 def main(args):
@@ -158,6 +132,7 @@ def main(args):
         # Random undersampling
         X_train_resampled, y_train_resampled = random_undersampling(X_train, y_train, args.random_seed)
 
+        
         # Get preprocessing pipeline
         # Split the numerical_cols if it's a single string
         if len(args.numerical_cols) == 1 and ' ' in args.numerical_cols[0]:
@@ -183,19 +158,21 @@ def main(args):
         # Evaluate the model on the validation set
         y_pred = logistic_model.predict(X_val)
         y_prob = logistic_model.predict_proba(X_val)[:, 1]  # Probability estimates
-        performance_metrics_df = evaluate_model(y_val, y_pred, y_prob)
+        performance_metrics_df = evaluate_model(y_val, y_pred)
+    
+        # Plot ROC curve
+       
+        y_prob_2d = np.vstack((1 - y_prob, y_prob)).T # Convert y_prob to a 2D array for wandb ROC plotting
 
-        # Extract the confusion matrix from the dataframe
-        cm = performance_metrics_df['Confusion Matrix'].values[0]
+        wandb.sklearn.plot_roc(y_val, y_prob_2d, logistic_model.classes_)
 
-        # Log confusion matrix as an image in wandb
-        wandb.log({"confusion_matrix": wandb.sklearn.plot_confusion_matrix(y_val, y_pred, cm)})
+        # Plot Precision-Recall curve
+        wandb.sklearn.plot_precision_recall(y_val, y_prob_2d, logistic_model.classes_)
 
-        # Plot and log ROC curve, then delete the image file
-        plot_and_log_roc_curve(y_val, y_prob)
+        # Plotting the confusion matrix
+        wandb.sklearn.plot_confusion_matrix(y_val, y_pred, logistic_model.classes_)
 
         logger.info(f"Performance metrics: {performance_metrics_df}")
-       
         # Log the model and metrics to wandb
         wandb.log({'performance_metrics': performance_metrics_df.to_dict(orient='records')[0]})
 
@@ -250,5 +227,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
-
-
