@@ -1,0 +1,42 @@
+name: data_quality_checks
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      csv:
+        description: Wandb artifact name for the CSV file to be tested
+        type: string
+        required: true
+      ref_data:
+        description: Wandb artifact name for the CSV file to be tested
+        type: string
+      ks_alpha:
+        description: Alpha value for the Kolmogorov-Smirnov test
+        type: float
+      numerical_columns:
+        description: List of numerical columns
+        type: string
+      required_columns:
+        description: Column names and types required in the data
+        type: string 
+      known_classes:
+        description: Known classes for the target column
+        type: string
+      missing_values:
+        description: Whether the data has missing values
+        type: string
+      ranges:
+        description: Ranges for the numerical columns
+        type: string
+    command: >-
+      pytest . -vv
+      --csv {csv}
+      --ref_data {ref_data}
+      --ks_alpha {ks_alpha}
+      --numerical_columns {numerical_columns}
+      --required_columns {required_columns}
+      --known_classes {known_classes}
+      --missing_values {missing_values}
+      --ranges {ranges}
+
