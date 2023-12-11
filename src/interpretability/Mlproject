@@ -24,7 +24,7 @@ entry_points:
         type: int
         required: true
       
-      report_artifact:
+      reports_artifact:
         description: Name of the reports artifact to log to W&B
         type: str
         required: true
@@ -34,5 +34,5 @@ entry_points:
                               --X_test_artifact {X_test_artifact} \
                               --y_test_artifact {y_test_artifact} \
                               --instance_index {instance_index} \
-                              --report_artifact {report_artifact}
+                              --reports_artifact {report_artifacts}
 
