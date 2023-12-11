@@ -29,17 +29,10 @@ opiod_analysis/
     ├── .gitignore
     ├── conda.yml
     ├── config.yaml
-    ├── dd.py
     ├── LICENSE
     ├── main.py
-    ├── Makefile
     ├── Mlproject
     ├── README.md
-    ├── requirements.txt
-    ├── setup.py
-    ├── temp_file.csv
-    ├── test_environment.py
-    ├── tox.ini
     ├── data/
     │   ├── external/
     │   │   └── .gitkeep
@@ -54,15 +47,6 @@ opiod_analysis/
     │   │   └── bankloan.csv
     │   └── ref/
     │       └── ref_bankloan.csv
-    ├── docs/
-    │   ├── commands.rst
-    │   ├── conf.py
-    │   ├── getting-started.rst
-    │   ├── index.rst
-    │   ├── make.bat
-    │   └── Makefile
-    ├── models/
-    │   └── .gitkeep
     ├── notebooks/
     │   ├── .gitkeep
     │   ├── ML Project.py
@@ -76,10 +60,6 @@ opiod_analysis/
     │       └── .gitkeep
     ├── src/
     │   ├── __init__.py
-    │   ├── data/
-    │   │   ├── .gitkeep
-    │   │   ├── make_dataset.py
-    │   │   └── __init__.py
     │   ├── data_check/
     │   │   ├── conda.yml
     │   │   ├── conftest.py
@@ -95,10 +75,6 @@ opiod_analysis/
     │   │   ├── conda.yaml
     │   │   ├── explore_data.py
     │   │   ├── Mlproject
-    │   │   └── __init__.py
-    │   ├── features/
-    │   │   ├── .gitkeep
-    │   │   ├── build_features.py
     │   │   └── __init__.py
     │   ├── interpretability/
     │   │   ├── conda.yaml
