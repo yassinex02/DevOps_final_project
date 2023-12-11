@@ -23,7 +23,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from src.models.transformer import FactorizeTransformer
+from transformer import FactorizeTransformer
 
 
 # Setting up logging

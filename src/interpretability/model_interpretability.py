@@ -10,6 +10,7 @@ import mlflow
 import logging
 import argparse
 import wandb
+from transformer import FactorizeTransformer
 
 
 # Initialize logging
