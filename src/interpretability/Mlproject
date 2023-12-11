@@ -30,9 +30,9 @@ entry_points:
         required: true
     
     command: >-
-      python model_testing.py --model_artifact {model_artifact} \
+      python python model_interpretability.py --model_artifact {model_artifact} \
                               --X_test_artifact {X_test_artifact} \
                               --y_test_artifact {y_test_artifact} \
                               --instance_index {instance_index} \
-                              --reports_artifact {report_artifacts}
+                              --reports_artifact {reports_artifact}
 
