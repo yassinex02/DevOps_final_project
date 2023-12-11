@@ -5,7 +5,6 @@ import os
 import shutil
 from typing import Tuple
 import mlflow
-import matplotlib.pyplot as plt
 import pandas as pd
 import wandb
 import numpy as np
@@ -14,19 +13,18 @@ from mlflow.models import infer_signature
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
-    auc,
     accuracy_score,
     f1_score,
     precision_score,
     recall_score,
     roc_auc_score,
     confusion_matrix,
-    roc_curve
 )
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from transformer import FactorizeTransformer
+
 
 # Setting up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
@@ -68,15 +66,17 @@ def random_undersampling(
             "An error occurred while random undersampling the data: %s", e)
         raise
 
+
 def train_logistic_regression(
-    X_train: pd.DataFrame, y_train: pd.Series, hyperparameters) -> LogisticRegression:
+        X_train: pd.DataFrame, y_train: pd.Series, hyperparameters) -> LogisticRegression:
 
     model = LogisticRegression(**hyperparameters)
     model.fit(X_train, y_train)
     return model
 
+
 def evaluate_model(
-     y_test: pd.Series, y_pred: pd.DataFrame, 
+    y_test: pd.Series, y_pred: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Evaluate the model using various metrics including 'Specificity', 'PPV', and 'NPV'.
@@ -108,7 +108,6 @@ def evaluate_model(
         raise
 
 
-
 def main(args):
     run = wandb.init(job_type="train_logistic_regression")
     run.config.update(args)  # Logs all current config to wandb
@@ -130,9 +129,9 @@ def main(args):
             X_train, y_train, test_size=args.val_size, random_state=args.random_seed)
 
         # Random undersampling
-        X_train_resampled, y_train_resampled = random_undersampling(X_train, y_train, args.random_seed)
+        X_train_resampled, y_train_resampled = random_undersampling(
+            X_train, y_train, args.random_seed)
 
-        
         # Get preprocessing pipeline
         # Split the numerical_cols if it's a single string
         if len(args.numerical_cols) == 1 and ' ' in args.numerical_cols[0]:
@@ -149,7 +148,8 @@ def main(args):
         # Train logistic regression model
         logistic_model = Pipeline(steps=[
             ('preprocessor', preprocessing_pipeline),
-            ('classifier', train_logistic_regression(X_train_resampled, y_train_resampled, hyperparameters))
+            ('classifier', train_logistic_regression(
+                X_train_resampled, y_train_resampled, hyperparameters))
         ])
 
         # Fit the pipeline to the resampled training data
@@ -157,24 +157,29 @@ def main(args):
 
         # Evaluate the model on the validation set
         y_pred = logistic_model.predict(X_val)
-        y_prob = logistic_model.predict_proba(X_val)[:, 1]  # Probability estimates
+        y_prob = logistic_model.predict_proba(
+            X_val)[:, 1]  # Probability estimates
         performance_metrics_df = evaluate_model(y_val, y_pred)
-    
+
         # Plot ROC curve
-       
-        y_prob_2d = np.vstack((1 - y_prob, y_prob)).T # Convert y_prob to a 2D array for wandb ROC plotting
+
+        # Convert y_prob to a 2D array for wandb ROC plotting
+        y_prob_2d = np.vstack((1 - y_prob, y_prob)).T
 
         wandb.sklearn.plot_roc(y_val, y_prob_2d, logistic_model.classes_)
 
         # Plot Precision-Recall curve
-        wandb.sklearn.plot_precision_recall(y_val, y_prob_2d, logistic_model.classes_)
+        wandb.sklearn.plot_precision_recall(
+            y_val, y_prob_2d, logistic_model.classes_)
 
         # Plotting the confusion matrix
-        wandb.sklearn.plot_confusion_matrix(y_val, y_pred, logistic_model.classes_)
+        wandb.sklearn.plot_confusion_matrix(
+            y_val, y_pred, logistic_model.classes_)
 
         logger.info(f"Performance metrics: {performance_metrics_df}")
         # Log the model and metrics to wandb
-        wandb.log({'performance_metrics': performance_metrics_df.to_dict(orient='records')[0]})
+        wandb.log(
+            {'performance_metrics': performance_metrics_df.to_dict(orient='records')[0]})
 
         # Infer the signature of the model and save the model
         signature = infer_signature(X_val, y_pred)
@@ -213,17 +218,28 @@ def main(args):
         logger.error(f"Error in model training or evaluation: {e}")
         raise
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train and evaluate a logistic regression model")
 
-    parser.add_argument("--X_train_artifact", type=str, required=True, help="W&B artifact name for X_train data")
-    parser.add_argument("--y_train_artifact", type=str, required=True, help="W&B artifact name for y_train data")
-    parser.add_argument("--val_size", type=float, required=True, help="Size for the validation set split")
-    parser.add_argument("--numerical_cols", nargs='+', required=True,help="List of column names to be treated as numerical features")
-    parser.add_argument("--factorize_cols", nargs='+', required=True,help="List of column names to factorize")
-    parser.add_argument("--hyperparameters", type=str, required=True, help="JSON file with hyperparameters for the logistic regression model")
-    parser.add_argument("--model_artifact", type=str, required=True, help="Name of the model to log to W&B")
-    parser.add_argument("--random_seed", type=int, default=42, help="Random seed for data splitting and undersampling")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Train and evaluate a logistic regression model")
+
+    parser.add_argument("--X_train_artifact", type=str,
+                        required=True, help="W&B artifact name for X_train data")
+    parser.add_argument("--y_train_artifact", type=str,
+                        required=True, help="W&B artifact name for y_train data")
+    parser.add_argument("--val_size", type=float, required=True,
+                        help="Size for the validation set split")
+    parser.add_argument("--numerical_cols", nargs='+', required=True,
+                        help="List of column names to be treated as numerical features")
+    parser.add_argument("--factorize_cols", nargs='+',
+                        required=True, help="List of column names to factorize")
+    parser.add_argument("--hyperparameters", type=str, required=True,
+                        help="JSON file with hyperparameters for the logistic regression model")
+    parser.add_argument("--model_artifact", type=str,
+                        required=True, help="Name of the model to log to W&B")
+    parser.add_argument("--random_seed", type=int, default=42,
+                        help="Random seed for data splitting and undersampling")
 
     args = parser.parse_args()
     main(args)
+

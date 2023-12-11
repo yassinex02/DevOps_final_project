@@ -43,5 +43,5 @@ def test_unsupported_file_format():
     try:
         df = load_data(file_path)
     except ValueError as e:
-        assert str(e) == f"Unsupported file format: .txt"
+        assert str(e) == "Unsupported file format: .txt"
 

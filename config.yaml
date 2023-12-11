@@ -1,7 +1,7 @@
 main:
   project_name: Loan_Default_Prediction
   experiment_name: trial
-  steps: loader,exploration,preprocessing,data_check,data_split,model_building, model_testing
+  steps: loader,exploration,preprocessing,data_check,data_split,model_building,interpretability,model_testing
 
 data_load:
   file_path: /workspaces/DevOps_final_project/data/raw/bankloan.csv
@@ -21,7 +21,7 @@ explore_data:
 
 
 preprocess_data:
-  # input_artifact: raw_bankloan_data:latest
+  
   drop_columns: []
   # factorize_columns: ['ed']
   # standardize_columns: ['income debtinc creddebt othdebt']
@@ -76,11 +76,14 @@ model_building:
   model_artifact: logistic_regression
   random_seed: 44
 
+interpretability:
+  instance_index: 0
+  reports_artifact: interpretability_report
+
 
 model_testing:
   X_test_artifact: X_test_data
   y_test_artifact: y_test_data
-
 
 
 logging:

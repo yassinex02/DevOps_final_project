@@ -15,10 +15,10 @@ from sklearn.model_selection import train_test_split
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 logger = logging.getLogger(__name__)
 
+
 def split_data(
     df: pd.DataFrame, target_column: str, test_size: float, random_state: int
 ) -> Tuple[pd.DataFrame]:
-    
     """
     Split the data into training and test sets.
 
@@ -27,7 +27,7 @@ def split_data(
         target_column (str): The name of the target column.
         test_size (float): The proportion of the data to use as the test set.
         random_state (int): The random state to use for reproducibility.
-    
+
     Returns: 
         Tuple[pd.DataFrame]: The training and test sets.
     """
@@ -66,10 +66,10 @@ def main(args):
         X_train, X_test, y_train, y_test = split_data(
             df, args.target_column, args.test_size, args.random_state
         )
-        
+
         # Logging the split datasets as artifacts
         datasets = {
-            "X_train": X_train, "X_test": X_test, 
+            "X_train": X_train, "X_test": X_test,
             "y_train": y_train, "y_test": y_test
         }
         for dataset_name, dataset in datasets.items():
@@ -84,11 +84,13 @@ def main(args):
                     description=f"{dataset_name} split of the dataset"
                 )
                 artifact.add_file(temp_file_path, name=f"{dataset_name}.csv")
-                logger.info(f"Logging {dataset_name} dataset as a W&B artifact.")
+                logger.info(
+                    f"Logging {dataset_name} dataset as a W&B artifact.")
                 wandb.log_artifact(artifact)
                 artifact.wait()
 
-        logger.info("Data splitting and logging process completed successfully.")
+        logger.info(
+            "Data splitting and logging process completed successfully.")
 
     except Exception as e:
         logger.error(f"An error occurred in the main process: {e}")
@@ -127,6 +129,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args)
 
-
-         
-     
