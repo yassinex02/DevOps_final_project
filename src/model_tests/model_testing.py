@@ -18,7 +18,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from transformer import FactorizeTransformer
+from src.model_tests.transformer import FactorizeTransformer
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 logger = logging.getLogger()

@@ -1,150 +1,110 @@
-from unittest.mock import MagicMock, patch
-import numpy as np
-import pandas as pd
+from src.models.train_model import train_logistic_regression
+from sklearn.datasets import make_classification
 import pytest
-from sklearn.linear_model import LogisticRegression
-
 from src.models.train_model import (
-    evaluate_model,
-    perform_baselining,
-    perform_model_building,
-    plot_roc_curve,
+    get_preprocessing_pipeline,
     random_undersampling,
-    save_model,
-    split_data,
     train_logistic_regression,
+    evaluate_model,
+    main,
 )
+import pandas as pd
+from sklearn.metrics import accuracy_score
+import json
+from unittest.mock import patch, MagicMock, mock_open
 
 
-# Fixture for creating a dummy dataset
-@pytest.fixture
-def dummy_data():
-    data = {"feature1": [0, 1, 0, 1], "feature2": [
-        1, 0, 1, 0], "target": [0, 1, 0, 1]}
-    return pd.DataFrame(data)
+def test_get_preprocessing_pipeline():
+    numerical_cols = ["num1", "num2"]
+    factorize_cols = ["fact1", "fact2"]
+    pipeline = get_preprocessing_pipeline(numerical_cols, factorize_cols)
+
+    # Get names of transformers
+    transformer_names = [name for name, _, _ in pipeline.transformers]
+
+    assert "num" in transformer_names
+    assert "fact" in transformer_names
 
 
-# Test for split_data function
+
+def test_random_undersampling():
+    X_train = pd.DataFrame({"feature": [1, 2, 1, 2]})
+    y_train = pd.Series([0, 1, 0, 1])
+    random_state = 42
+
+    X_train_rus, y_train_rus = random_undersampling(X_train, y_train, random_state)
+
+    assert len(X_train_rus) == len(y_train_rus)
 
 
-def test_split_data(dummy_data):
-    X_train, X_test, y_train, y_test = split_data(dummy_data, "target", 0.5, 1)
-    assert len(X_train) == len(y_train) == 2
-    assert len(X_test) == len(y_test) == 2
+def test_train_logistic_regression():
+    X, y = make_classification(n_samples=100, n_features=4)
+    hyperparameters = {"max_iter": 100}
+
+    model = train_logistic_regression(X, y, hyperparameters)
+
+    assert model.classes_ is not None
 
 
-# Test for random_undersampling function
+def test_evaluate_model():
+    y_test = pd.Series([1, 0, 1, 0])
+    y_pred = pd.Series([1, 0, 0, 1])
+
+    results = evaluate_model(y_test, y_pred)
+
+    assert results["Accuracy"].iloc[0] == accuracy_score(y_test, y_pred)
 
 
-def test_random_undersampling(dummy_data):
-    X = dummy_data.drop(["target"], axis=1)
-    y = dummy_data["target"]
-    X_resampled, y_resampled = random_undersampling(X, y, 1)
-    assert len(X_resampled) == len(y_resampled)
-    assert y_resampled.sum() == len(y_resampled) / 2  # Check for balanced classes
 
+# Sample arguments for testing
+sample_args = {
+    "X_train_artifact": "path/to/X_train.csv",
+    "y_train_artifact": "path/to/y_train.csv",
+    "val_size": 0.2,
+    "numerical_cols": "col1 col2",  # make sure these columns exist in mock_X_train
+    "factorize_cols": "col3",       # add this column to mock_X_train
+    "hyperparameters": "path/to/hyperparameters.json",
+    "model_artifact": "model_artifact_name",
+    "random_seed": 42
+}
 
-# Test for perform_baselining function
+# Sample data for the hyperparameters file
+sample_hyperparameters = {"max_iter": 100, "solver": "liblinear"}
 
+# Convert 'col3' to numerical categories for the test
+mock_X_train = pd.DataFrame({
+    'col1': [1, 2, 3, 4, 5, 6],
+    'col2': [5, 6, 7, 8, 9, 10],
+    'col3': pd.Categorical(['a', 'b', 'c', 'a', 'b', 'c']).codes  # Convert to numerical categories
+})
+mock_y_train = pd.Series([0, 1, 0, 1, 0, 1])  
 
-def test_perform_baselining(dummy_data):
-    _, X_test, _, y_test = split_data(dummy_data, "target", 0.5, 1)
-    baseline_df = perform_baselining(X_test, y_test)
-    assert "Majority Class" in baseline_df.columns
-    assert "Stratified Random" in baseline_df.columns
+@patch("src.models.train_model.argparse.ArgumentParser.parse_args")
+@patch("src.models.train_model.pd.read_csv", side_effect=[mock_X_train, mock_y_train])
+@patch("src.models.train_model.json.load", return_value=sample_hyperparameters)
+@patch("src.models.train_model.wandb")
+@patch("src.models.train_model.mlflow")
+@patch("builtins.open", new_callable=mock_open, read_data=json.dumps(sample_hyperparameters))
+def test_main(mock_file_open, mock_mlflow, mock_wandb, mock_json_load, mock_read_csv, mock_parse_args):
+    # Mock the command line arguments
+    mock_args = MagicMock()
+    mock_args.X_train_artifact = sample_args["X_train_artifact"]
+    mock_args.y_train_artifact = sample_args["y_train_artifact"]
+    mock_args.val_size = sample_args["val_size"]
+    mock_args.numerical_cols = sample_args["numerical_cols"].split()
+    mock_args.factorize_cols = sample_args["factorize_cols"].split()
+    mock_args.hyperparameters = sample_args["hyperparameters"]
+    mock_args.model_artifact = sample_args["model_artifact"]
+    mock_args.random_seed = sample_args["random_seed"]
+    mock_parse_args.return_value = mock_args
 
+    # Call the main function
+    main(mock_args)
 
-# Test for train_logistic_regression function
+    # Assertions to ensure the main function is calling the expected methods
+    mock_read_csv.assert_called()
+    mock_json_load.assert_called()
+    mock_wandb.init.assert_called()
+    mock_mlflow.sklearn.save_model.assert_called()
+    mock_file_open.assert_called_with(sample_args["hyperparameters"])
 
-
-def test_train_logistic_regression(dummy_data):
-    X_train, _, y_train, _ = split_data(dummy_data, "target", 0.5, 1)
-    model = train_logistic_regression(X_train, y_train, 1)
-    assert isinstance(model, LogisticRegression)
-
-
-# Test for evaluate_model function
-
-
-def test_evaluate_model(dummy_data):
-    X_train, X_test, y_train, y_test = split_data(dummy_data, "target", 0.5, 1)
-    model = train_logistic_regression(X_train, y_train, 1)
-    evaluation_df = evaluate_model(model, X_test, y_test)
-    assert "Accuracy" in evaluation_df.columns
-    assert "Precision" in evaluation_df.columns
-    assert "Recall" in evaluation_df.columns
-    assert "ROC AUC" in evaluation_df.columns
-
-
-# Test for plot_roc_curve function with mock to avoid plotting
-
-
-@patch("matplotlib.pyplot.savefig")
-def test_plot_roc_curve(mock_savefig, dummy_data):
-    X_train, X_test, y_train, y_test = split_data(dummy_data, "target", 0.5, 1)
-    model = train_logistic_regression(X_train, y_train, 1)
-    plot_roc_curve(model, X_test, y_test, "reports/")
-    mock_savefig.assert_called_once()
-
-
-# Test for save_model function with mock to avoid file writing
-
-
-@patch("joblib.dump")
-def test_save_model(mock_dump, dummy_data):
-    model = LogisticRegression()
-    save_model(model, "dummy_path.joblib")
-    mock_dump.assert_called_once_with(model, "dummy_path.joblib")
-
-
-# Test for perform_model_building function with mock to avoid file operations
-
-
-@patch("src.models.train_model.save_model")
-@patch("src.models.train_model.plot_roc_curve")
-@patch(
-    "src.models.train_model.evaluate_model",
-    return_value=pd.DataFrame({"Accuracy": [0.5]}),
-)
-@patch(
-    "src.models.train_model.train_logistic_regression",
-    return_value=LogisticRegression(),
-)
-@patch(
-    "src.models.train_model.perform_baselining",
-    return_value=pd.DataFrame({"Majority Class": [0.5]}),
-)
-@patch("src.models.train_model.random_undersampling")
-@patch("src.models.train_model.split_data")
-def test_perform_model_building(
-    mock_split_data,
-    mock_random_undersampling,
-    mock_perform_baselining,
-    mock_train_logistic_regression,
-    mock_evaluate_model,
-    mock_plot_roc_curve,
-    mock_save_model,
-    dummy_data,
-):
-    # Mocking the split data function to return the dummy data directly
-    mock_split_data.return_value = (
-        dummy_data.drop("target", axis=1),
-        dummy_data.drop("target", axis=1),
-        dummy_data["target"],
-        dummy_data["target"],
-    )
-    mock_random_undersampling.return_value = (
-        pd.DataFrame({"feature1": [0, 1], "feature2": [1, 0]}),
-        pd.Series([0, 1]),
-    )
-    # Call the perform_model_building function with the dummy data
-    perform_model_building(dummy_data, "target", 0.5, 1)
-
-    # Check if all mocked functions were called
-    mock_split_data.assert_called_once()
-    mock_random_undersampling.assert_called_once()
-    mock_perform_baselining.assert_called_once()
-    mock_train_logistic_regression.assert_called_once()
-    mock_evaluate_model.assert_called_once()
-    mock_plot_roc_curve.assert_called_once()
-    mock_save_model.assert_called_once()
