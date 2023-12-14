@@ -25,9 +25,8 @@ logger = logging.getLogger()
 
 
 def evaluate_model(
-     y_test: pd.Series, y_pred: pd.DataFrame, y_prob: pd.DataFrame
+    y_test: pd.Series, y_pred: pd.DataFrame, y_prob: pd.DataFrame
 ) -> pd.DataFrame:
-
     """
     Calculate the performance metrics of the model and log them using wandb and MLflow.
 
@@ -61,8 +60,9 @@ def evaluate_model(
 
         return pd.DataFrame([metrics])
     except Exception as e:
-        logging.error(f"An error occurred while evaluating the model: {e}")
+        logging.error("An error occurred while evaluating the model: %s", e)
         raise
+
 
 def main(args):
     """
@@ -88,10 +88,9 @@ def main(args):
     try:
         logger.info("Loading model and performing inference on test set")
 
-        model= mlflow.sklearn.load_model(model_local_path)
+        model = mlflow.sklearn.load_model(model_local_path)
         y_pred = model.predict(X_test)
 
-        
         logger.info("Calculating performance metrics")
 
         y_prob = model.predict_proba(X_test)[:, 1]
@@ -102,16 +101,18 @@ def main(args):
         cm = metrics['Confusion Matrix'].values[0]
 
         # Log confusion matrix as an image in wandb
-        wandb.log({"confusion_matrix": wandb.sklearn.plot_confusion_matrix(y_test, y_pred, cm)})
+        wandb.log(
+            {"confusion_matrix": wandb.sklearn.plot_confusion_matrix(y_test, y_pred, cm)})
 
         logger.info(f"Performance metrics: {metrics}")
- 
+
         # Logging metrics to wandb
         wandb.log(metrics.to_dict(orient='records')[0])
 
     except Exception as e:
-        logger.error(f"Error in model testing: {e}")
+        logger.error("Error in model testing: %s", e)
         raise
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -119,13 +120,10 @@ if __name__ == "__main__":
 
     parser.add_argument("--model_artifact", type=str, required=True,
                         help="The MLflow model artifact to test")
-    parser.add_argument("--X_test_artifact", type=str, required=True, 
+    parser.add_argument("--X_test_artifact", type=str, required=True,
                         help="The test features artifact")
     parser.add_argument("--y_test_artifact", type=str, required=True,
                         help="The test labels artifact")
-    
+
     args = parser.parse_args()
     main(args)
-
-
-

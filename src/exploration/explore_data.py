@@ -1,29 +1,46 @@
+"""
+This script generates a data profiling report using ydata-profiling's ProfileReport
+"""
+
 import argparse
 import logging
 from typing import Optional
-import pandas as pd
-from ydata_profiling import ProfileReport
-import wandb
 
+import pandas as pd
+import wandb
+from ydata_profiling import ProfileReport
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 logger = logging.getLogger(__name__)
 
 
-
-def generate_profiling_report(df: pd.DataFrame,report_title: str ,output_file: str, expected_columns: list, columns: Optional[list] = None):
+def generate_profiling_report(
+    df: pd.DataFrame,
+    report_title: str,
+    output_file: str,
+    expected_columns: list,
+    columns: Optional[list] = None,
+):
     """
-    Generate a profiling report from a DataFrame using ydata-profiling's ProfileReport.
-    ... [rest of the docstring]
+    Generate a profiling report from a DataFrame
+    using ydata-profiling's ProfileReport.
     """
     logging.info("Generating profiling report...")
 
     # Check if expected columns exist in the DataFrame
-    missing_expected_columns = [col for col in expected_columns if col not in df.columns]
+    missing_expected_columns = [
+        col for col in expected_columns if col not in df.columns
+    ]
     if missing_expected_columns:
-        logging.error(f"Expected columns not found in the DataFrame: {missing_expected_columns}")
-        raise ValueError(f"Expected columns not found in the DataFrame: {missing_expected_columns}")
+        logging.error(
+            "Expected columns not found in the DataFrame: %s",
+            missing_expected_columns
+        )
+        raise ValueError(
+            "Expected columns not found in the DataFrame: %s",
+            missing_expected_columns
+        )
 
     # Select specified columns if provided
     selected_df = df[columns] if columns else df
@@ -32,14 +49,26 @@ def generate_profiling_report(df: pd.DataFrame,report_title: str ,output_file: s
     try:
         profile = ProfileReport(selected_df, title=report_title)
         profile.to_file(output_file)
-        logging.info(f"Profiling report generated and saved to {output_file}.")
+        logging.info("Profiling report generated and saved to %s.", output_file)
     except Exception as e:
-        logging.error(f"An error occurred while generating the profiling report: {e}")
+        logging.error("An error occurred while generating the profiling report: %s", e)
         raise
 
 
 def main(args):
+    """
+    Retrieve the input data artifact from Weights & Biases, generate a profiling report,
+    and log the report as an artifact to Weights & Biases.
 
+    Args:
+        args (Namespace): Command-line arguments.
+
+    Raises:
+        Exception: If an error occurs during data exploration.
+
+    Returns:
+        None
+    """
     wandb.init(job_type="data_exploration")
 
     artifact = wandb.use_artifact(args.input_artifact)
@@ -50,15 +79,17 @@ def main(args):
         df = pd.read_csv(artifact_path)
 
         # Convert the string '[]' to an actual empty list
-        if args.columns == ['[]']:
+        if args.columns == ["[]"]:
             args.columns = []
-        
+
         # Split comma-separated strings into lists
-        args.expected_columns = args.expected_columns[0].split(' ')
-        args.columns = args.columns[0].split(' ')
+        args.expected_columns = args.expected_columns[0].split(" ")
+        args.columns = args.columns[0].split(" ")
 
         # Generate profiling report
-        generate_profiling_report(df, args.report_title, args.output_file, args.expected_columns, args.columns)
+        generate_profiling_report(
+            df, args.report_title, args.output_file, args.expected_columns, args.columns
+        )
 
         # Log the profiling report as an artifact
         output_artifact = wandb.Artifact(
@@ -71,23 +102,59 @@ def main(args):
 
         logger.info("Profiling report generated and logged to Weights & Biases.")
     except Exception as e:
-        logger.error(f"An error occurred in main function: {e}")
+        logger.error("An error occurred in main function: %s", e)
         raise
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate and log a data profiling report to Weights & Biases.")
-    parser.add_argument("--input_artifact", type=str, required=True, help="Weights & Biases artifact path for the input data.")
-    parser.add_argument("--report_title", type=str, required=True, help="Title of the profiling report.")
-    parser.add_argument("--output_file", type=str, required=True, help="File path for the output profiling report.")
-    parser.add_argument("--expected_columns", type=str, nargs='*', required=True, help="List of expected columns in the DataFrame.")
-    parser.add_argument("--columns", type=str, nargs='*', help="List of columns to include in the report, if not all.")
-    parser.add_argument("--output_artifact_name", type=str, required=True, help="Name for the output artifact in Weights & Biases.")
-    parser.add_argument("--output_artifact_type", type=str, required=True, help="Type for the output artifact in Weights & Biases.")
-    parser.add_argument("--output_artifact_description", type=str, help="Description for the output artifact in Weights & Biases.")
+    parser = argparse.ArgumentParser(
+        description="Generate and log a data profiling report to Weights & Biases."
+    )
+    parser.add_argument(
+        "--input_artifact",
+        type=str,
+        required=True,
+        help="Weights & Biases artifact path for the input data.",
+    )
+    parser.add_argument(
+        "--report_title", type=str, required=True, help="Title of the profiling report."
+    )
+    parser.add_argument(
+        "--output_file",
+        type=str,
+        required=True,
+        help="File path for the output profiling report.",
+    )
+    parser.add_argument(
+        "--expected_columns",
+        type=str,
+        nargs="*",
+        required=True,
+        help="List of expected columns in the DataFrame.",
+    )
+    parser.add_argument(
+        "--columns",
+        type=str,
+        nargs="*",
+        help="List of columns to include in the report, if not all.",
+    )
+    parser.add_argument(
+        "--output_artifact_name",
+        type=str,
+        required=True,
+        help="Name for the output artifact in Weights & Biases.",
+    )
+    parser.add_argument(
+        "--output_artifact_type",
+        type=str,
+        required=True,
+        help="Type for the output artifact in Weights & Biases.",
+    )
+    parser.add_argument(
+        "--output_artifact_description",
+        type=str,
+        help="Description for the output artifact in Weights & Biases.",
+    )
 
     args = parser.parse_args()
     main(args)
-            
-            
-
-

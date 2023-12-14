@@ -1,8 +1,8 @@
 """ This module contains functions for checking the data with series of tests."""
 
-import pandas as pd
-import numpy as np
 import logging
+
+import pandas as pd
 import scipy.stats
 
 # Setup logging
@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 
 # Non-Deterministic Test
 def test_kolmogorov_smirnov(ref_data, data, ks_alpha, numerical_columns):
-    """Test that the distribution of the numerical columns in the data is the same as in the reference data."""
+    """Test that the distribution of the numerical columns in 
+        the data is the same as in the reference data."""
+
     # Bonferroni correction for multiple hypothesis testing
     alpha_prime = 1 - (1 - ks_alpha) ** (1 / len(numerical_columns))
 

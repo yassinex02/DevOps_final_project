@@ -1,11 +1,15 @@
-import os
+"""
+This script orchestrates the execution of the ML pipeline steps.
+"""
 import json
+import logging
+import os
 import tempfile
+
 import hydra
+import mlflow
 import omegaconf
 from omegaconf import DictConfig
-import logging
-import mlflow
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -15,14 +19,29 @@ _steps = [
     "loader",
     "exploration",
     "preprocessing",
-    "data_check", "data_split",
+    "data_check",
+    "data_split",
     "model_building",
-    "interpretability", "model_testing"
+    "interpretability",
+    "model_testing",
 ]
 
 
 @hydra.main(config_name="config")
 def main(config: DictConfig):
+    """
+    This function executes the steps defined in the configuration file.
+
+    Args:
+        config (DictConfig): The configuration object containing the parameters for each step.
+
+    Raises:
+        Exception: If any of the MLflow projects fail.
+
+    Returns:
+        None
+    """
+
     # Setup the wandb experiment. All runs will be grouped under this name
     os.environ["WANDB_PROJECT"] = config["main"]["project_name"]
     os.environ["WANDB_RUN_GROUP"] = config["main"]["experiment_name"]
@@ -91,8 +110,6 @@ def main(config: DictConfig):
                 parameters={
                     "input_artifact": config["data_load"]["artifact_name"] + ":latest",
                     "drop_columns": config["preprocess_data"]["drop_columns"],
-                    # "factorize_columns": " ".join(config["preprocess_data"]["factorize_columns"]),
-                    # "standardize_columns": " ".join(config["preprocess_data"]["standardize_columns"]),
                     "output_artifact_name": config["preprocess_data"][
                         "output_artifact_name"
                     ],

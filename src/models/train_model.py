@@ -1,30 +1,33 @@
+"""
+This module contains the code for training and evaluating a logistic regression model.
+"""
 import argparse
 import json
 import logging
 import os
 import shutil
 from typing import Tuple
+
 import mlflow
+import numpy as np
 import pandas as pd
 import wandb
-import numpy as np
 from imblearn.under_sampling import RandomUnderSampler
 from mlflow.models import infer_signature
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
+    confusion_matrix,
     f1_score,
     precision_score,
     recall_score,
     roc_auc_score,
-    confusion_matrix,
 )
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from transformer import FactorizeTransformer
-
 
 # Setting up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
@@ -32,6 +35,16 @@ logger = logging.getLogger(__name__)
 
 
 def get_preprocessing_pipeline(numerical_cols, factorize_cols):
+    """
+    Get the preprocessing pipeline for numerical and factorize columns.
+
+    Args:
+        numerical_cols (list or str): List of column names to be treated as numerical features.
+        factorize_cols (list or str): List of column names to factorize.
+
+    Returns:
+        preprocessor (ColumnTransformer): Preprocessing pipeline.
+    """
     if isinstance(numerical_cols, str):
         numerical_cols = [numerical_cols]
 
@@ -55,6 +68,14 @@ def random_undersampling(
 ) -> Tuple[pd.DataFrame]:
     """
     Perform random undersampling on the training data.
+
+    Args:
+        X_train (pd.DataFrame): Training data.
+        y_train (pd.Series): Training labels.
+        random_state (int): Random seed for reproducibility.
+
+    Returns:
+        Tuple[pd.DataFrame]: Resampled training data and labels.
     """
     try:
         logging.info("Random undersampling.")
@@ -69,7 +90,17 @@ def random_undersampling(
 
 def train_logistic_regression(
         X_train: pd.DataFrame, y_train: pd.Series, hyperparameters) -> LogisticRegression:
+    """
+    Train a logistic regression model.
 
+    Args:
+        X_train (pd.DataFrame): Training data.
+        y_train (pd.Series): Training labels.
+        hyperparameters (dict): Hyperparameters for the logistic regression model.
+
+    Returns:
+        LogisticRegression: Trained logistic regression model.
+    """
     model = LogisticRegression(**hyperparameters)
     model.fit(X_train, y_train)
     return model
@@ -80,6 +111,13 @@ def evaluate_model(
 ) -> pd.DataFrame:
     """
     Evaluate the model using various metrics including 'Specificity', 'PPV', and 'NPV'.
+
+    Args:
+        y_test (pd.Series): True labels.
+        y_pred (pd.DataFrame): Predicted labels.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the evaluation metrics.
     """
     try:
         logging.info("Evaluating the model.")
@@ -104,11 +142,17 @@ def evaluate_model(
 
         return pd.DataFrame([metrics])
     except Exception as e:
-        logging.error(f"An error occurred while evaluating the model: {e}")
+        logging.error("An error occurred while evaluating the model: %s", e)
         raise
 
 
 def main(args):
+    """
+    Main function to train and evaluate a logistic regression model.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments.
+    """
     run = wandb.init(job_type="train_logistic_regression")
     run.config.update(args)  # Logs all current config to wandb
 
@@ -215,7 +259,7 @@ def main(args):
         logger.info("Model training and evaluation completed.")
 
     except Exception as e:
-        logger.error(f"Error in model training or evaluation: {e}")
+        logger.error("Error in model training or evaluation: %s", e)
         raise
 
 
@@ -242,4 +286,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
-
