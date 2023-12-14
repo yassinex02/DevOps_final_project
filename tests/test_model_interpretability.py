@@ -1,12 +1,30 @@
+"""
+This module contains unit tests for the model_interpretability module.
+"""
 import os
+
 import numpy as np
 import pandas as pd
 import pytest
 from sklearn.linear_model import LogisticRegression
-from src.interpretability.model_interpretability import extract_feature_importance, run_lime_analysis, run_shap_analysis
+
+from src.interpretability.model_interpretability import (
+    extract_feature_importance,
+    run_lime_analysis,
+    run_shap_analysis,
+)
 
 
 def test_run_shap_analysis(mocker):
+    """
+    Test function for running SHAP analysis.
+
+    Args:
+        mocker: The mocker object for mocking dependencies.
+
+    Returns:
+        None
+    """
     # Mock data
     mock_model = LogisticRegression()
     mock_X_test = pd.DataFrame({'Feature1': [1, 2, 3], 'Feature2': [4, 5, 6]})
@@ -25,6 +43,15 @@ def test_run_shap_analysis(mocker):
 
 
 def test_run_lime_analysis(mocker):
+    """
+    Test function for running LIME analysis.
+
+    Args:
+        mocker: The mocker object for mocking dependencies.
+
+    Returns:
+        None
+    """
     # Mock data
     mock_model = LogisticRegression()
     mock_X_test = pd.DataFrame({'Feature1': [1, 2, 3], 'Feature2': [4, 5, 6]})
@@ -40,6 +67,15 @@ def test_run_lime_analysis(mocker):
 
 
 def test_extract_feature_importance(mocker):
+    """
+    Test function for extracting feature importance.
+
+    Args:
+        mocker: The mocker object for mocking dependencies.
+
+    Returns:
+        None
+    """
     # Mock data
     mock_model = LogisticRegression()
     mock_model.coef_ = np.array([[0.1, 0.2]])
@@ -50,4 +86,3 @@ def test_extract_feature_importance(mocker):
 
     # Run the function
     extract_feature_importance(mock_model, mock_X)
-
