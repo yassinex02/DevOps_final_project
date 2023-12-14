@@ -31,3 +31,4 @@ dependencies:
       - witwidget==1.8.1
       - wandb==0.15.12
       - mlflow[extras]==2.8.0
+      - packages\dist\transformer-0.1-py3-none-any.whl

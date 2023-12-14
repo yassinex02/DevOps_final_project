@@ -14,7 +14,7 @@ import pandas as pd
 import shap
 import wandb
 from sklearn.linear_model import LogisticRegression
-from transformer import transformer
+from transformer import FactorizeTransformer
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
