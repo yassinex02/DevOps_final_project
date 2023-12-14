@@ -130,7 +130,10 @@ opiod_analysis/
 ## Usage
 1. Make sure you are in the conda environment.
 2. Run your Python scripts or Jupyter Notebooks within this environment to ensure all dependencies are available.
-3. Example of running entire pipeline: mlflow run . -P steps="[loader,exploration,preprocessing,data_check,data_split,model_building,interpretability,model_testing]"
+3. Example of running entire pipeline: 
+```
+mlflow run . -P steps="[loader,exploration,preprocessing,data_check,data_split,model_building,interpretability,model_testing]
+```
 
 ## Testing
 Tests can be run using `pytest`. Make sure to install `pytest` if you haven't, and then run the following command from the project directory:
