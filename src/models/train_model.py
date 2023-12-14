@@ -27,7 +27,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from transformer import FactorizeTransformer
+from transformer.transformer import FactorizeTransformer
 
 # Setting up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")

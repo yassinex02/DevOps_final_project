@@ -20,6 +20,12 @@ It also includes fairness and interpretability analysis.
 ## Configuration
 The project uses a `config.yaml` file for configuration settings, including data paths, model parameters, and feature engineering settings. Modify this file as needed.
 
+## Custom Modules
+In the packages folder, you can add your custom module. For example, there is a custom transformer module
+in the packages folder. It is in a folder called transformer with an __init__.py and a file called transformer.py
+The conda.yaml will install every custom module in packages with the line "- -e ./packages" seen under pip.
+With this you can easily import your own custom module to be used in this project if you wish.
+
 ## Project Structure
 ------------
 
@@ -49,9 +55,13 @@ opiod_analysis/
     │       └── ref_bankloan.csv
     ├── notebooks/
     │   ├── .gitkeep
-    │   ├── ML Project.py
-    │   ├── ML Project_Refactored.py
+    │   ├── ML Project.ipynb
     │   └── ML Project_WandB.ipynb
+    ├── packages/
+    │   ├── transformer/
+    │   │   ├── __init__.py
+    │   │   ├── transformer.py
+    │   ├── setup.py
     ├── references/
     │   └── .gitkeep
     ├── reports/
@@ -90,9 +100,12 @@ opiod_analysis/
     │   │   ├── conda.yaml
     │   │   ├── Mlproject
     │   │   ├── train_model.py
-    │   │   ├── transformer.py
     │   │   ├── __init__.py
-    │   │   └── reports/
+    │   ├── model_tests/
+    │   │   ├── conda.yaml
+    │   │   ├── Mlproject
+    │   │   ├── model_testing.py
+    │   │   ├── __init__.py        
     │   └── preprocessing/
     │       ├── conda.yml
     │       ├── Mlproject
@@ -117,6 +130,7 @@ opiod_analysis/
 ## Usage
 1. Make sure you are in the conda environment.
 2. Run your Python scripts or Jupyter Notebooks within this environment to ensure all dependencies are available.
+3. Example of running entire pipeline: mlflow run . -P steps="[loader,exploration,preprocessing,data_check,data_split,model_building,interpretability,model_testing]"
 
 ## Testing
 Tests can be run using `pytest`. Make sure to install `pytest` if you haven't, and then run the following command from the project directory:

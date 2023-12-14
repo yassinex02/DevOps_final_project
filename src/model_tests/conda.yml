@@ -11,3 +11,4 @@ dependencies:
   - pip:
       - wandb==0.16.*
       - mlflow[extras]==2.9.*
+      - -e ../../packages
