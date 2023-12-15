@@ -141,10 +141,6 @@ Tests can be run using `pytest`. Make sure to install `pytest` if you haven't, a
 pytest tests/
 ```
 
-## Interpretability and Fairness
-- Interpretability is implemented using both SHAP and LIME techniques. Refer to `interpretability.py` for more details.
-- Fairness metrics including demographic parity and equalized odds are calculated. Refer to `fairness_analysis.py` for more details.
-
 ## License
 This project is licensed under the MIT License.
 
