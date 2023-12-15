@@ -1,3 +1,6 @@
+"""
+This script loads data from a file and logs it to Weights & Biases.
+"""
 import argparse
 import logging
 import os
@@ -26,8 +29,8 @@ def load_data(file_path: str, sheet_name: str = None) -> pd.DataFrame:
     """
     # Check if file exists
     if not os.path.exists(file_path):
-        logging.error(f"File not found: {file_path}")
-        raise FileNotFoundError(f"File not found: {file_path}")
+        logging.error("File not found: %s", file_path)
+        raise FileNotFoundError("File not found: %s" % file_path)
 
     # Determine the file extension
     _, file_extension = os.path.splitext(file_path)
@@ -35,23 +38,23 @@ def load_data(file_path: str, sheet_name: str = None) -> pd.DataFrame:
     # Load the data based on file extension
     try:
         if file_extension == '.xlsx':
-            logging.info(f"Loading Excel file from {file_path}")
+            logging.info("Loading Excel file from %s", file_path)
             df = pd.read_excel(file_path, sheet_name=sheet_name)
         elif file_extension == '.csv':
-            logging.info(f"Loading CSV file from {file_path}")
+            logging.info("Loading CSV file from %s", file_path)
             df = pd.read_csv(file_path)
         elif file_extension == '.json':
-            logging.info(f"Loading JSON file from {file_path}")
+            logging.info("Loading JSON file from %s", file_path)
             df = pd.read_json(file_path)
         else:
-            logging.error(f"Unsupported file format: {file_extension}")
+            logging.error("Unsupported file format: %s", file_extension)
             raise ValueError(f"Unsupported file format: {file_extension}")
 
-        logging.info(f"Successfully loaded data from {file_path}")
+        logging.info("Successfully loaded data from %s", file_path)
         return df
 
     except Exception as e:
-        logging.error(f"An error occurred while loading the data: {e}")
+        logging.error("An error occurred while loading the data: %s", e)
         raise
 
 

@@ -1,16 +1,26 @@
+"""
+This module contains the unit tests for the preprocess_data module.
+"""
 import pandas as pd
 import pytest
 from src.preprocessing.preprocess_data import clean_data
 
-# Your test functions will be here
 
 
 def test_clean_data_empty_dataframe():
+    """
+    Test case for clean_data function with an empty DataFrame.
+    It should raise a ValueError.
+    """
     with pytest.raises(ValueError):
         clean_data(pd.DataFrame())
 
 
 def test_clean_data_drop_columns():
+    """
+    Test case for clean_data function with dropping columns.
+    It should drop the specified columns from the DataFrame.
+    """
     # Create a sample DataFrame
     df = pd.DataFrame({
         'A': [1, 2, 3],
